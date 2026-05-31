@@ -14,6 +14,8 @@ The simplest split for this project:
 - `apps/api`: Railway, Render, Fly.io, or a VPS
 - PostgreSQL: Supabase, Neon, Railway, or Render PostgreSQL
 
+If you want to host on your own computer instead, use [SELF_HOSTING.md](./SELF_HOSTING.md). Cloudflare Tunnel is recommended for that setup.
+
 ## DNS Settings
 
 Configure these records at your domain provider:

@@ -101,3 +101,5 @@ npm run seed:admin
 - API: `https://api.yuloaf.work`
 
 部署與 DNS 設定請看 [DEPLOYMENT.md](./DEPLOYMENT.md)。
+
+如果要部署在自己的電腦並透過 Cloudflare 連進來，請看 [SELF_HOSTING.md](./SELF_HOSTING.md)。
