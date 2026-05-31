@@ -168,15 +168,169 @@ cloudflared tunnel run task-market
 
 For production, use a process manager such as PM2 or Windows services so the app starts again after reboot.
 
-## Alternative: Router Port Forwarding
+## Alternative: Router Port Forwarding With Caddy
 
-Only use this if you understand router/firewall exposure.
+Use this if you want to expose the site from your own router instead of Cloudflare Tunnel.
 
-You would need:
+Do not expose these ports publicly:
 
-- Public IP or dynamic DNS
-- Router forwarding `80` and `443` to your computer
-- Reverse proxy such as Caddy or Nginx
-- Cloudflare DNS records pointing to your public IP
+```text
+3000  Next.js
+3001  NestJS API
+5433  PostgreSQL
+```
 
-For a home computer, Cloudflare Tunnel is usually the better path.
+Only expose:
+
+```text
+80    HTTP
+443   HTTPS
+```
+
+Recommended local flow:
+
+```text
+Internet
+  -> Cloudflare DNS
+  -> Your home public IP
+  -> Router port forwarding 80/443
+  -> Your computer
+  -> Caddy reverse proxy
+  -> localhost:3000 / localhost:3001
+```
+
+### 1. Give Your Computer A Fixed LAN IP
+
+In your router DHCP settings, reserve a fixed local IP for your computer, for example:
+
+```text
+192.168.1.50
+```
+
+The exact IP depends on your router network.
+
+### 2. Router Port Forwarding
+
+Forward these ports to your computer:
+
+```text
+External TCP 80  -> 192.168.1.50 TCP 80
+External TCP 443 -> 192.168.1.50 TCP 443
+```
+
+Do not forward PostgreSQL or app ports.
+
+### 3. Windows Firewall
+
+Allow inbound TCP ports:
+
+```text
+80
+443
+```
+
+### 4. Cloudflare DNS
+
+Find your public IP by visiting:
+
+```text
+https://1.1.1.1/help
+```
+
+Then create DNS records in Cloudflare:
+
+```text
+Type  Name  Value
+A     @     YOUR_PUBLIC_IP
+A     api   YOUR_PUBLIC_IP
+CNAME www   yuloaf.work
+```
+
+Start with DNS only, which is the gray cloud, until HTTPS works. After that, you may turn on the orange cloud proxy.
+
+Cloudflare SSL/TLS mode:
+
+```text
+Full (strict)
+```
+
+### 5. Install Caddy
+
+Install Caddy on Windows:
+
+```powershell
+winget install CaddyServer.Caddy
+```
+
+Create a file named `Caddyfile`, for example:
+
+```text
+C:\me\Projects\task-market\Caddyfile
+```
+
+Use this content:
+
+```caddyfile
+yuloaf.work {
+  reverse_proxy localhost:3000
+}
+
+www.yuloaf.work {
+  redir https://yuloaf.work{uri}
+}
+
+api.yuloaf.work {
+  reverse_proxy localhost:3001
+}
+```
+
+Run Caddy:
+
+```powershell
+cd C:\me\Projects\task-market
+caddy run
+```
+
+### 6. Start The App
+
+Terminal 1:
+
+```powershell
+cd C:\me\Projects\task-market
+docker compose up -d
+npm run start -w apps/api
+```
+
+Terminal 2:
+
+```powershell
+cd C:\me\Projects\task-market
+npm run start -w apps/web
+```
+
+Terminal 3:
+
+```powershell
+cd C:\me\Projects\task-market
+caddy run
+```
+
+### 7. Test
+
+Open:
+
+```text
+https://yuloaf.work
+https://api.yuloaf.work/api/tasks
+```
+
+The API URL should return `401 Unauthorized` when you are not logged in.
+
+### Notes
+
+- If your home ISP uses CGNAT, router port forwarding will not work. In that case, use Cloudflare Tunnel instead.
+- If your public IP changes often, update the Cloudflare DNS records whenever it changes, or install a dynamic DNS updater.
+- Keep PostgreSQL private. Never expose port `5433` to the internet.
+- Keep Windows and Node dependencies updated.
+
+For most home networks, Cloudflare Tunnel is still safer and easier, but router port forwarding works if your ISP gives you a real public IP.
