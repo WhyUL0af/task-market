@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: task-market-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: task_market
+      POSTGRES_PASSWORD: task_market
+      POSTGRES_DB: task_market
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

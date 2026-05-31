@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum TaskStatus {
+  DRAFT
+  OPEN
+  APPLIED
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  name               String
+  passwordHash       String
+  role               Role              @default(EMPLOYEE)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  createdTasks       Task[]            @relation("CreatedTasks")
+  assignedTasks      Task[]            @relation("AssignedTasks")
+  applications       TaskApplication[]
+  submissions        TaskSubmission[]
+  comments           Comment[]
+}
+
+model Task {
+  id             String            @id @default(cuid())
+  title          String
+  description    String
+  reward         Int?
+  status         TaskStatus        @default(DRAFT)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  creatorId      String
+  creator        User              @relation("CreatedTasks", fields: [creatorId], references: [id])
+  assigneeId     String?
+  assignee       User?             @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  applications   TaskApplication[]
+  submissions    TaskSubmission[]
+  comments       Comment[]
+}
+
+model TaskApplication {
+  id          String            @id @default(cuid())
+  message     String?
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  taskId      String
+  task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  applicantId String
+  applicant   User              @relation(fields: [applicantId], references: [id])
+
+  @@unique([taskId, applicantId])
+}
+
+model TaskSubmission {
+  id          String           @id @default(cuid())
+  content     String
+  status      SubmissionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  taskId      String
+  task        Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employeeId  String
+  employee    User             @relation(fields: [employeeId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+}
