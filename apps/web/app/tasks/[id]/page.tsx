@@ -17,10 +17,7 @@ export default function TaskDetailPage() {
   const [error, setError] = useState("");
 
   const alreadyApplied = useMemo(
-    () =>
-      !!task?.applications.some(
-        (application) => application.applicant.id === user?.id
-      ),
+    () => !!task?.applications.some((application) => application.applicant.id === user?.id),
     [task, user]
   );
 
@@ -75,6 +72,9 @@ export default function TaskDetailPage() {
   }
 
   async function deleteTask() {
+    if (!window.confirm("確定要刪除這個任務嗎？")) {
+      return;
+    }
     await api(`/tasks/${params.id}`, { method: "DELETE" });
     router.push("/tasks");
   }
@@ -90,145 +90,187 @@ export default function TaskDetailPage() {
   }
 
   if (!task) {
-    return <p className={error ? "error" : "muted"}>{error || "載入中..."}</p>;
+    return <p className={error ? "error" : "notice"}>{error || "載入任務中..."}</p>;
   }
+
+  const canApply =
+    user?.role === "EMPLOYEE" &&
+    (task.status === "OPEN" || task.status === "APPLIED") &&
+    !alreadyApplied;
+  const canSubmit =
+    user?.role === "EMPLOYEE" &&
+    task.assignee?.id === user.id &&
+    task.status === "IN_PROGRESS";
 
   return (
     <section className="stack">
-      <div className="panel stack">
-        <div className="row">
-          <div>
-            <span className="badge">{task.status}</span>
-            <h1>{task.title}</h1>
-            <p className="muted">建立者：{task.creator.name}</p>
+      <div className="page-head">
+        <div>
+          <p className="page-kicker">Task detail</p>
+          <h1>{task.title}</h1>
+          <div className="meta-row">
+            <span className={`badge ${statusClass(task.status)}`}>{task.status}</span>
+            <span>建立者 {task.creator.name}</span>
+            <span>{task.reward ? `預算 $${task.reward}` : "未設定預算"}</span>
           </div>
+        </div>
+        {user?.role === "ADMIN" ? (
+          <button className="button danger" type="button" onClick={deleteTask}>
+            刪除任務
+          </button>
+        ) : null}
+      </div>
+
+      <div className="split">
+        <div className="stack">
+          <section className="panel">
+            <h2>任務內容</h2>
+            <p>{task.description}</p>
+            <div className="meta-row">
+              {task.assignee ? <span>負責人 {task.assignee.name}</span> : <span>尚未指派</span>}
+              <span>申請 {task.applications.length}</span>
+              <span>提交 {task.submissions.length}</span>
+            </div>
+          </section>
+
           {user?.role === "ADMIN" ? (
-            <button className="button danger" type="button" onClick={deleteTask}>
-              刪除
-            </button>
-          ) : null}
-        </div>
-        <p>{task.description}</p>
-        <p>{task.reward ? `預算 ${task.reward}` : "未設定預算"}</p>
-        {task.assignee ? <p>指派給：{task.assignee.name}</p> : null}
-      </div>
-
-      {user?.role === "EMPLOYEE" &&
-      (task.status === "OPEN" || task.status === "APPLIED") &&
-      !alreadyApplied ? (
-        <form className="panel form" onSubmit={applyTask}>
-          <h2>申請任務</h2>
-          <textarea
-            className="textarea"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="簡短說明你適合這個任務的原因"
-          />
-          <button className="button" type="submit">
-            送出申請
-          </button>
-        </form>
-      ) : null}
-
-      {user?.role === "EMPLOYEE" &&
-      task.assignee?.id === user.id &&
-      task.status === "IN_PROGRESS" ? (
-        <form className="panel form" onSubmit={submitWork}>
-          <h2>提交成果</h2>
-          <textarea
-            className="textarea"
-            value={submission}
-            onChange={(event) => setSubmission(event.target.value)}
-            required
-            placeholder="貼上成果連結、說明或交付內容"
-          />
-          <button className="button" type="submit">
-            提交
-          </button>
-        </form>
-      ) : null}
-
-      {user?.role === "ADMIN" ? (
-        <div className="panel stack">
-          <h2>申請列表</h2>
-          {task.applications.map((application) => (
-            <div className="card" key={application.id}>
-              <div className="row">
-                <strong>{application.applicant.name}</strong>
-                <span className="badge">{application.status}</span>
-              </div>
-              <p className="muted">{application.message || "沒有附加訊息"}</p>
-              {application.status === "PENDING" ? (
-                <div className="actions">
-                  <button
-                    className="button success"
-                    type="button"
-                    onClick={() => reviewApplication(application.id, "APPROVED")}
-                  >
-                    核准
-                  </button>
-                  <button
-                    className="button danger"
-                    type="button"
-                    onClick={() => reviewApplication(application.id, "REJECTED")}
-                  >
-                    拒絕
-                  </button>
+            <section className="panel stack">
+              <h2>申請審核</h2>
+              {task.applications.length === 0 ? (
+                <div className="empty">目前沒有申請。</div>
+              ) : (
+                <div className="list">
+                  {task.applications.map((application) => (
+                    <div className="record" key={application.id}>
+                      <div className="row">
+                        <div>
+                          <strong>{application.applicant.name}</strong>
+                          <p className="muted">{application.message || "沒有附加訊息"}</p>
+                        </div>
+                        <span className="badge">{application.status}</span>
+                      </div>
+                      {application.status === "PENDING" ? (
+                        <div className="actions">
+                          <button
+                            className="button success"
+                            type="button"
+                            onClick={() => reviewApplication(application.id, "APPROVED")}
+                          >
+                            核准
+                          </button>
+                          <button
+                            className="button danger"
+                            type="button"
+                            onClick={() => reviewApplication(application.id, "REJECTED")}
+                          >
+                            拒絕
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
+              )}
+            </section>
+          ) : null}
 
-      <div className="panel stack">
-        <h2>提交紀錄</h2>
-        {task.submissions.map((item) => (
-          <div className="card" key={item.id}>
-            <div className="row">
-              <strong>{item.employee.name}</strong>
-              <span className="badge">{item.status}</span>
-            </div>
-            <p>{item.content}</p>
-            {user?.role === "ADMIN" && item.status === "PENDING" ? (
-              <div className="actions">
-                <button
-                  className="button success"
-                  type="button"
-                  onClick={() => reviewSubmission(item.id, "ACCEPTED")}
-                >
-                  驗收
-                </button>
-                <button
-                  className="button danger"
-                  type="button"
-                  onClick={() => reviewSubmission(item.id, "REJECTED")}
-                >
-                  退回
-                </button>
+          <section className="panel stack">
+            <h2>提交紀錄</h2>
+            {task.submissions.length === 0 ? (
+              <div className="empty">目前沒有提交紀錄。</div>
+            ) : (
+              <div className="list">
+                {task.submissions.map((item) => (
+                  <div className="record" key={item.id}>
+                    <div className="row">
+                      <strong>{item.employee.name}</strong>
+                      <span className="badge">{item.status}</span>
+                    </div>
+                    <p>{item.content}</p>
+                    {user?.role === "ADMIN" && item.status === "PENDING" ? (
+                      <div className="actions">
+                        <button
+                          className="button success"
+                          type="button"
+                          onClick={() => reviewSubmission(item.id, "ACCEPTED")}
+                        >
+                          驗收
+                        </button>
+                        <button
+                          className="button danger"
+                          type="button"
+                          onClick={() => reviewSubmission(item.id, "REJECTED")}
+                        >
+                          退回
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
               </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
+            )}
+          </section>
+        </div>
 
-      <form className="panel form" onSubmit={addComment}>
-        <h2>留言</h2>
-        {task.comments.map((item) => (
-          <p key={item.id}>
-            <strong>{item.author.name}</strong>：{item.content}
-          </p>
-        ))}
-        <textarea
-          className="textarea"
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          required
-        />
-        <button className="button" type="submit">
-          新增留言
-        </button>
-      </form>
+        <aside className="stack">
+          {canApply ? (
+            <form className="panel form full" onSubmit={applyTask}>
+              <h2>申請任務</h2>
+              <textarea
+                className="textarea"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                placeholder="簡短說明你適合這個任務的原因"
+              />
+              <button className="button" type="submit">
+                送出申請
+              </button>
+            </form>
+          ) : null}
+
+          {canSubmit ? (
+            <form className="panel form full" onSubmit={submitWork}>
+              <h2>提交成果</h2>
+              <textarea
+                className="textarea"
+                value={submission}
+                onChange={(event) => setSubmission(event.target.value)}
+                required
+                placeholder="貼上成果連結、說明或交付內容"
+              />
+              <button className="button" type="submit">
+                提交成果
+              </button>
+            </form>
+          ) : null}
+
+          <form className="panel form full" onSubmit={addComment}>
+            <h2>留言</h2>
+            <div className="list">
+              {task.comments.map((item) => (
+                <div className="record" key={item.id}>
+                  <strong>{item.author.name}</strong>
+                  <p>{item.content}</p>
+                </div>
+              ))}
+            </div>
+            <textarea
+              className="textarea"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              required
+              placeholder="新增留言"
+            />
+            <button className="button" type="submit">
+              送出留言
+            </button>
+          </form>
+        </aside>
+      </div>
     </section>
   );
+}
+
+function statusClass(status: string) {
+  return `status-${status.toLowerCase().replace("_", "-")}`;
 }

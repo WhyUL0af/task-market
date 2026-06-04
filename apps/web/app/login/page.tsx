@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { api } from "@/lib/api";
 import { saveSession } from "@/lib/auth";
@@ -32,39 +31,56 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="panel">
-      <h1>登入</h1>
-      <form className="form" onSubmit={onSubmit}>
-        <label className="field">
-          <span className="label">Email</span>
-          <input
-            className="input"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            type="email"
-            required
-          />
-        </label>
-        <label className="field">
-          <span className="label">密碼</span>
-          <input
-            className="input"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            type="password"
-            required
-          />
-        </label>
-        {error ? <p className="error">{error}</p> : null}
-        <div className="actions">
+    <section className="split">
+      <div className="panel stack">
+        <div>
+          <p className="page-kicker">Sign in</p>
+          <h1>登入任務管理系統</h1>
+          <p className="muted">使用管理員或員工帳號進入工作台。</p>
+        </div>
+        <form className="form full" onSubmit={onSubmit}>
+          <label className="field">
+            <span className="label">Email</span>
+            <input
+              className="input"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label className="field">
+            <span className="label">密碼</span>
+            <input
+              className="input"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </label>
+          {error ? <p className="error">{error}</p> : null}
           <button className="button" type="submit">
             登入
           </button>
-          <Link className="button secondary" href="/register">
-            建立帳號
-          </Link>
+        </form>
+      </div>
+      <aside className="panel stack">
+        <h2>帳號由後台建立</h2>
+        <p className="muted">
+          公開註冊已關閉。請由 Admin 在使用者管理頁新增員工帳號。
+        </p>
+        <div className="record">
+          <strong>Admin</strong>
+          <p className="muted">發布任務、審核申請、驗收成果。</p>
         </div>
-      </form>
+        <div className="record">
+          <strong>Employee</strong>
+          <p className="muted">申請任務、查看指派、提交成果。</p>
+        </div>
+      </aside>
     </section>
   );
 }

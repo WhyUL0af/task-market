@@ -15,7 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="shell">
           <header className="topbar">
             <Link className="brand" href="/tasks">
-              Task Market
+              <span className="brand-mark">TM</span>
+              <span>Task Market</span>
             </Link>
             <Nav />
           </header>

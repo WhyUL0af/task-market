@@ -80,7 +80,6 @@ export default function UsersPage() {
     if (!editingId) {
       return;
     }
-
     setError("");
     setMessage("");
     try {
@@ -94,9 +93,7 @@ export default function UsersPage() {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
-      setUsers((items) =>
-        items.map((item) => (item.id === user.id ? user : item))
-      );
+      setUsers((items) => items.map((item) => (item.id === user.id ? user : item)));
       setEditingId(null);
       setEditForm(emptyForm);
       setMessage("使用者已更新");
@@ -106,13 +103,9 @@ export default function UsersPage() {
   }
 
   async function deleteUser(user: ManagedUser) {
-    const confirmed = window.confirm(
-      `確定要刪除 ${user.name} (${user.email}) 嗎？`
-    );
-    if (!confirmed) {
+    if (!window.confirm(`確定要刪除 ${user.name} (${user.email}) 嗎？`)) {
       return;
     }
-
     setError("");
     setMessage("");
     try {
@@ -120,11 +113,7 @@ export default function UsersPage() {
       setUsers((items) => items.filter((item) => item.id !== user.id));
       setMessage("使用者已刪除");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "刪除使用者失敗，請確認此帳號沒有任務紀錄"
-      );
+      setError(err instanceof Error ? err.message : "刪除使用者失敗");
     }
   }
 
@@ -139,73 +128,82 @@ export default function UsersPage() {
 
   return (
     <section className="stack">
-      <div>
-        <h1>使用者管理</h1>
-        <p className="muted">建立帳號、修改資料、調整角色、重設密碼或刪除帳號。</p>
+      <div className="page-head">
+        <div>
+          <p className="page-kicker">Admin</p>
+          <h1>使用者管理</h1>
+          <p className="muted">建立帳號、編輯角色、重設密碼或刪除尚未使用的帳號。</p>
+        </div>
       </div>
 
-      <form className="panel form" onSubmit={createUser}>
-        <h2>新增使用者</h2>
-        <UserFields form={createForm} setForm={setCreateForm} requirePassword />
-        <button className="button" type="submit">
-          建立帳號
-        </button>
-      </form>
+      <div className="split">
+        <form className="panel form full" onSubmit={createUser}>
+          <h2>新增使用者</h2>
+          <UserFields form={createForm} setForm={setCreateForm} requirePassword />
+          <button className="button" type="submit">
+            建立帳號
+          </button>
+        </form>
+
+        <aside className="panel">
+          <h2>管理規則</h2>
+          <p className="muted">已有任務、申請、提交或留言紀錄的帳號不能刪除。</p>
+          <p className="muted">若要重設密碼，編輯帳號後填入新密碼即可。</p>
+        </aside>
+      </div>
 
       {error ? <p className="error">{error}</p> : null}
-      {message ? <p className="muted">{message}</p> : null}
+      {message ? <p className="notice">{message}</p> : null}
 
-      <div className="panel stack">
+      <section className="panel stack">
         <h2>帳號列表</h2>
-        {users.map((user) => (
-          <div className="card" key={user.id}>
-            {editingId === user.id ? (
-              <form className="form" onSubmit={updateUser}>
-                <UserFields form={editForm} setForm={setEditForm} />
-                <div className="actions">
-                  <button className="button" type="submit">
-                    儲存
-                  </button>
-                  <button
-                    className="button secondary"
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                  >
-                    取消
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div className="row">
-                  <div>
-                    <strong>{user.name}</strong>
-                    <p className="muted">{user.email}</p>
-                  </div>
-                  <span className="badge">{user.role}</span>
-                </div>
-                <div className="actions">
-                  <button
-                    className="button secondary"
-                    type="button"
-                    onClick={() => startEdit(user)}
-                  >
-                    編輯
-                  </button>
-                  <button
-                    className="button danger"
-                    type="button"
-                    disabled={user.id === currentUser.id}
-                    onClick={() => deleteUser(user)}
-                  >
-                    刪除
-                  </button>
-                </div>
-              </>
-            )}
+        {users.length === 0 ? (
+          <div className="empty">目前沒有使用者。</div>
+        ) : (
+          <div className="list">
+            {users.map((user) => (
+              <div className="card" key={user.id}>
+                {editingId === user.id ? (
+                  <form className="form full" onSubmit={updateUser}>
+                    <UserFields form={editForm} setForm={setEditForm} />
+                    <div className="actions">
+                      <button className="button" type="submit">
+                        儲存
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                        取消
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="row">
+                      <div>
+                        <strong>{user.name}</strong>
+                        <p className="muted">{user.email}</p>
+                      </div>
+                      <span className="badge">{user.role}</span>
+                    </div>
+                    <div className="actions">
+                      <button className="button secondary" type="button" onClick={() => startEdit(user)}>
+                        編輯
+                      </button>
+                      <button
+                        className="button danger"
+                        type="button"
+                        disabled={user.id === currentUser.id}
+                        onClick={() => deleteUser(user)}
+                      >
+                        刪除
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        )}
+      </section>
     </section>
   );
 }
@@ -247,9 +245,7 @@ function UserFields({
         <input
           className="input"
           value={form.password}
-          onChange={(event) =>
-            setForm({ ...form, password: event.target.value })
-          }
+          onChange={(event) => setForm({ ...form, password: event.target.value })}
           type="password"
           minLength={8}
           required={requirePassword}
@@ -260,9 +256,7 @@ function UserFields({
         <select
           className="select"
           value={form.role}
-          onChange={(event) =>
-            setForm({ ...form, role: event.target.value as Role })
-          }
+          onChange={(event) => setForm({ ...form, role: event.target.value as Role })}
         >
           <option value="EMPLOYEE">Employee</option>
           <option value="ADMIN">Admin</option>

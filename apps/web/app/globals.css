@@ -1,13 +1,18 @@
 :root {
-  --background: #f6f7f9;
-  --foreground: #1f2933;
+  --background: #f4f6f8;
+  --foreground: #17202a;
   --muted: #667085;
-  --line: #d8dee7;
+  --subtle: #8a94a6;
+  --line: #d9e0ea;
+  --line-strong: #c5cedb;
   --panel: #ffffff;
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --danger: #c2410c;
-  --success: #047857;
+  --panel-soft: #f9fafb;
+  --primary: #1769aa;
+  --primary-dark: #10517f;
+  --danger: #b42318;
+  --success: #027a48;
+  --warning: #b54708;
+  --ink: #344054;
 }
 
 * {
@@ -19,6 +24,7 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
 }
 
 a {
@@ -33,44 +39,117 @@ textarea {
   font: inherit;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 6px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+h3 {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
 .shell {
   min-height: 100vh;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 24px;
+  gap: 20px;
+  min-height: 64px;
+  padding: 0 28px;
   border-bottom: 1px solid var(--line);
-  background: var(--panel);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
 }
 
 .brand {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
   font-weight: 700;
+}
+
+.brand-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   color: var(--muted);
+  font-size: 14px;
 }
 
+.nav a,
 .link-button {
   border: 0;
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  padding: 0;
+  padding: 8px 10px;
+}
+
+.nav a:hover,
+.link-button:hover {
+  background: #eef3f8;
+  color: var(--foreground);
 }
 
 .main {
-  width: min(1120px, calc(100% - 32px));
+  width: min(1160px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 32px 0;
+  padding: 32px 0 48px;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.page-kicker {
+  margin-bottom: 6px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .stack {
@@ -84,17 +163,34 @@ textarea {
   gap: 16px;
 }
 
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
 .panel,
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 20px;
+}
+
+.panel {
+  padding: 22px;
 }
 
 .card {
   display: grid;
   gap: 12px;
+  padding: 18px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+a.card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
 }
 
 .row {
@@ -104,10 +200,22 @@ textarea {
   gap: 12px;
 }
 
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .form {
   display: grid;
   gap: 14px;
-  max-width: 560px;
+  max-width: 620px;
+}
+
+.form.full {
+  max-width: none;
 }
 
 .field {
@@ -124,11 +232,19 @@ textarea {
 .textarea,
 .select {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
   padding: 10px 12px;
   background: #fff;
   color: var(--foreground);
+  outline: none;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.14);
 }
 
 .textarea {
@@ -137,13 +253,16 @@ textarea {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 6px;
   padding: 10px 14px;
   background: var(--primary);
   color: #fff;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .button:hover {
@@ -151,8 +270,12 @@ textarea {
 }
 
 .button.secondary {
-  background: #e5e7eb;
-  color: var(--foreground);
+  background: #e9eef5;
+  color: var(--ink);
+}
+
+.button.secondary:hover {
+  background: #dce4ee;
 }
 
 .button.danger {
@@ -166,16 +289,63 @@ textarea {
 .badge {
   display: inline-flex;
   width: fit-content;
+  align-items: center;
   border-radius: 999px;
   padding: 4px 9px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: #eef3f8;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 700;
 }
 
+.status-open,
+.status-done,
+.status-review,
+.status-progress,
+.status-applied,
+.status-draft,
+.status-cancelled {
+  color: var(--ink);
+}
+
+.status-open {
+  background: #e7f6ec;
+  color: var(--success);
+}
+
+.status-done {
+  background: #edf7ff;
+  color: #175cd3;
+}
+
+.status-review,
+.status-applied {
+  background: #fff4e5;
+  color: var(--warning);
+}
+
+.status-progress {
+  background: #eef4ff;
+  color: #3538cd;
+}
+
+.status-draft {
+  background: #f2f4f7;
+  color: var(--muted);
+}
+
+.status-cancelled {
+  background: #fff1f0;
+  color: var(--danger);
+}
+
 .muted {
   color: var(--muted);
+}
+
+.subtle {
+  color: var(--subtle);
+  font-size: 13px;
 }
 
 .actions {
@@ -184,6 +354,61 @@ textarea {
   gap: 8px;
 }
 
+.error,
+.notice {
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
 .error {
+  background: #fff1f0;
   color: var(--danger);
+}
+
+.notice {
+  background: #eef6ff;
+  color: var(--primary-dark);
+}
+
+.empty {
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  padding: 28px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.record {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--panel-soft);
+}
+
+@media (max-width: 760px) {
+  .topbar,
+  .page-head,
+  .row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar {
+    position: static;
+    padding: 16px;
+  }
+
+  .nav {
+    flex-wrap: wrap;
+  }
+
+  .split {
+    grid-template-columns: 1fr;
+  }
 }

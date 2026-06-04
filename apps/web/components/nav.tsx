@@ -22,7 +22,7 @@ export function Nav() {
     <nav className="nav">
       <Link href="/tasks">任務</Link>
       <Link href="/my-tasks">我的任務</Link>
-      {user?.role === "ADMIN" ? <Link href="/users">使用者管理</Link> : null}
+      {user?.role === "ADMIN" ? <Link href="/users">使用者</Link> : null}
       {user ? (
         <button className="link-button" type="button" onClick={logout}>
           登出

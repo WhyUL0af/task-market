@@ -15,7 +15,7 @@ export default function MyTasksPage() {
     setUser(getCurrentUser());
     api<Task[]>("/tasks")
       .then(setTasks)
-      .catch((err) => setError(err instanceof Error ? err.message : "讀取失敗"));
+      .catch((err) => setError(err instanceof Error ? err.message : "讀取任務失敗"));
   }, []);
 
   const myTasks = useMemo(() => {
@@ -28,30 +28,48 @@ export default function MyTasksPage() {
       }
       return (
         task.assignee?.id === user.id ||
-        task.applications.some(
-          (application) => application.applicant.id === user.id
-        )
+        task.applications.some((application) => application.applicant.id === user.id)
       );
     });
   }, [tasks, user]);
 
   return (
     <section className="stack">
-      <div>
-        <h1>我的任務</h1>
-        <p className="muted">查看你建立、申請或被指派的任務。</p>
+      <div className="page-head">
+        <div>
+          <p className="page-kicker">My work</p>
+          <h1>我的任務</h1>
+          <p className="muted">集中查看你建立、申請或被指派的任務。</p>
+        </div>
       </div>
+
       {error ? <p className="error">{error}</p> : null}
-      <div className="grid">
-        {myTasks.map((task) => (
-          <Link className="card" href={`/tasks/${task.id}`} key={task.id}>
-            <span className="badge">{task.status}</span>
-            <h2>{task.title}</h2>
-            <p className="muted">{task.description}</p>
-            {task.assignee ? <p>指派給：{task.assignee.name}</p> : null}
-          </Link>
-        ))}
-      </div>
+
+      {myTasks.length === 0 ? (
+        <div className="empty">目前沒有和你相關的任務。</div>
+      ) : (
+        <div className="grid">
+          {myTasks.map((task) => (
+            <Link className="card" href={`/tasks/${task.id}`} key={task.id}>
+              <div className="row">
+                <span className={`badge ${statusClass(task.status)}`}>{task.status}</span>
+                <span className="subtle">{task.reward ? `$${task.reward}` : "未設定預算"}</span>
+              </div>
+              <div>
+                <h2>{task.title}</h2>
+                <p className="muted">{task.description}</p>
+              </div>
+              <div className="meta-row">
+                {task.assignee ? <span>負責人 {task.assignee.name}</span> : <span>尚未指派</span>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
+}
+
+function statusClass(status: string) {
+  return `status-${status.toLowerCase().replace("_", "-")}`;
 }

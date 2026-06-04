@@ -32,11 +32,18 @@ export default function NewTaskPage() {
   }
 
   return (
-    <section className="panel">
-      <h1>新增任務</h1>
-      <form className="form" onSubmit={onSubmit}>
+    <section className="stack">
+      <div className="page-head">
+        <div>
+          <p className="page-kicker">Admin</p>
+          <h1>新增任務</h1>
+          <p className="muted">建立任務草稿或直接開放員工申請。</p>
+        </div>
+      </div>
+
+      <form className="panel form" onSubmit={onSubmit}>
         <label className="field">
-          <span className="label">標題</span>
+          <span className="label">任務標題</span>
           <input
             className="input"
             value={title}
@@ -45,7 +52,7 @@ export default function NewTaskPage() {
           />
         </label>
         <label className="field">
-          <span className="label">描述</span>
+          <span className="label">任務描述</span>
           <textarea
             className="textarea"
             value={description}
@@ -64,7 +71,7 @@ export default function NewTaskPage() {
           />
         </label>
         <label className="field">
-          <span className="label">狀態</span>
+          <span className="label">發布狀態</span>
           <select
             className="select"
             value={status}
@@ -75,9 +82,14 @@ export default function NewTaskPage() {
           </select>
         </label>
         {error ? <p className="error">{error}</p> : null}
-        <button className="button" type="submit">
-          建立
-        </button>
+        <div className="actions">
+          <button className="button" type="submit">
+            建立任務
+          </button>
+          <button className="button secondary" type="button" onClick={() => router.push("/tasks")}>
+            取消
+          </button>
+        </div>
       </form>
     </section>
   );
