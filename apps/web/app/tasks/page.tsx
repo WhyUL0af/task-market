@@ -45,7 +45,7 @@ export default function TasksPage() {
                 <span className={`badge ${statusClass(task.status)}`}>
                   {task.status}
                 </span>
-                <span className="subtle">{task.xpReward} XP</span>
+                <span className="xp-badge">{task.xpReward} XP</span>
               </div>
               <div>
                 <h2>{task.title}</h2>

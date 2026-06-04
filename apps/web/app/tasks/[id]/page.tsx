@@ -113,7 +113,7 @@ export default function TaskDetailPage() {
             <span>建立者 {task.creator.name}</span>
             <span>{task.reward ? `預算 $${task.reward}` : "未設定預算"}</span>
             <span>難度 {task.difficulty}</span>
-            <span>{task.xpReward} XP</span>
+            <span className="xp-badge">{task.xpReward} XP</span>
           </div>
         </div>
         {user?.role === "ADMIN" ? (
@@ -140,7 +140,7 @@ export default function TaskDetailPage() {
               <span>提交 {task.submissions.length}</span>
             </div>
             <div className="stat-grid" style={{ marginTop: 16 }}>
-              <div className="stat">
+              <div className="stat highlight-card">
                 <span className="subtle">任務 XP</span>
                 <strong>{task.xpReward}</strong>
               </div>

@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
         ) : (
           <div className="list">
             {users.map((user, index) => (
-              <div className="card" key={user.id}>
+              <div className={index === 0 ? "card highlight-card" : "card"} key={user.id}>
                 <div className="row">
                   <div className="row" style={{ justifyContent: "flex-start" }}>
                     <span className="rank">{index + 1}</span>
@@ -47,7 +47,7 @@ export default function LeaderboardPage() {
                       <p className="muted">{user.email}</p>
                     </div>
                   </div>
-                  <span className="badge">Lv.{user.level ?? 1}</span>
+                  <span className="level-badge">Lv.{user.level ?? 1}</span>
                 </div>
                 <div className="stat-grid">
                   <div className="stat">

@@ -1,5 +1,5 @@
 :root {
-  --background: #f4f6f8;
+  --background: #f3f6fb;
   --foreground: #17202a;
   --muted: #667085;
   --subtle: #8a94a6;
@@ -9,6 +9,12 @@
   --panel-soft: #f9fafb;
   --primary: #1769aa;
   --primary-dark: #10517f;
+  --accent: #d97706;
+  --accent-soft: #fff4df;
+  --mint: #059669;
+  --mint-soft: #e9f8f1;
+  --violet: #6d5bd0;
+  --violet-soft: #f0eeff;
   --danger: #b42318;
   --success: #027a48;
   --warning: #b54708;
@@ -22,7 +28,9 @@
 body {
   margin: 0;
   color: var(--foreground);
-  background: var(--background);
+  background:
+    radial-gradient(circle at top left, rgba(23, 105, 170, 0.12), transparent 34%),
+    linear-gradient(135deg, #f8fafc 0%, var(--background) 42%, #eef6f3 100%);
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.5;
 }
@@ -81,8 +89,8 @@ h3 {
   gap: 20px;
   min-height: 64px;
   padding: 0 28px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgba(217, 224, 234, 0.8);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(10px);
 }
 
@@ -100,10 +108,11 @@ h3 {
   height: 28px;
   place-items: center;
   border-radius: 7px;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--mint));
   color: #fff;
   font-size: 13px;
   letter-spacing: 0;
+  box-shadow: 0 8px 20px rgba(23, 105, 170, 0.22);
 }
 
 .nav {
@@ -126,7 +135,7 @@ h3 {
 
 .nav a:hover,
 .link-button:hover {
-  background: #eef3f8;
+  background: #eef6f8;
   color: var(--foreground);
 }
 
@@ -142,6 +151,15 @@ h3 {
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 20px;
+}
+
+.page-head::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
 }
 
 .page-kicker {
@@ -175,6 +193,7 @@ h3 {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.045);
 }
 
 .panel {
@@ -185,12 +204,13 @@ h3 {
   display: grid;
   gap: 12px;
   padding: 18px;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 a.card:hover {
   border-color: var(--line-strong);
   box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+  transform: translateY(-2px);
 }
 
 .row {
@@ -259,14 +279,14 @@ a.card:hover {
   border: 0;
   border-radius: 6px;
   padding: 10px 14px;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), #1b7f98);
   color: #fff;
   cursor: pointer;
   font-weight: 700;
 }
 
 .button:hover {
-  background: var(--primary-dark);
+  background: linear-gradient(135deg, var(--primary-dark), #126277);
 }
 
 .button.secondary {
@@ -298,6 +318,31 @@ a.card:hover {
   font-weight: 700;
 }
 
+.xp-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.level-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--violet-soft);
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .status-open,
 .status-done,
 .status-review,
@@ -325,6 +370,11 @@ a.card:hover {
 }
 
 .status-progress {
+  background: #eef4ff;
+  color: #3538cd;
+}
+
+.status-in-progress {
   background: #eef4ff;
   color: #3538cd;
 }
@@ -402,6 +452,16 @@ a.card:hover {
   border-radius: 8px;
   padding: 14px;
   background: var(--panel-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), var(--mint));
 }
 
 .stat strong {
@@ -422,9 +482,17 @@ a.card:hover {
   height: 34px;
   place-items: center;
   border-radius: 8px;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
   color: #fff;
   font-weight: 800;
+  box-shadow: 0 8px 18px rgba(217, 119, 6, 0.22);
+}
+
+.highlight-card {
+  border-color: rgba(217, 119, 6, 0.28);
+  background:
+    linear-gradient(135deg, rgba(255, 244, 223, 0.86), rgba(255, 255, 255, 0.95)),
+    var(--panel);
 }
 
 @media (max-width: 760px) {
