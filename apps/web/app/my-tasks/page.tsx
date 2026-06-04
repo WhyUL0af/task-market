@@ -53,13 +53,14 @@ export default function MyTasksPage() {
             <Link className="card" href={`/tasks/${task.id}`} key={task.id}>
               <div className="row">
                 <span className={`badge ${statusClass(task.status)}`}>{task.status}</span>
-                <span className="subtle">{task.reward ? `$${task.reward}` : "未設定預算"}</span>
+                <span className="subtle">{task.xpReward} XP</span>
               </div>
               <div>
                 <h2>{task.title}</h2>
                 <p className="muted">{task.description}</p>
               </div>
               <div className="meta-row">
+                <span>難度 {task.difficulty}</span>
                 {task.assignee ? <span>負責人 {task.assignee.name}</span> : <span>尚未指派</span>}
               </div>
             </Link>

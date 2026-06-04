@@ -184,6 +184,25 @@ export default function UsersPage() {
                       </div>
                       <span className="badge">{user.role}</span>
                     </div>
+                    <div className="stat-grid">
+                      <div className="stat">
+                        <span className="subtle">Level</span>
+                        <strong>{user.level ?? 1}</strong>
+                      </div>
+                      <div className="stat">
+                        <span className="subtle">XP</span>
+                        <strong>{user.xp ?? 0}</strong>
+                      </div>
+                    </div>
+                    {user.badges && user.badges.length > 0 ? (
+                      <div className="badge-strip">
+                        {user.badges.map((item) => (
+                          <span className="badge" key={item.badge.id}>
+                            {item.badge.icon} {item.badge.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="actions">
                       <button className="button secondary" type="button" onClick={() => startEdit(user)}>
                         編輯

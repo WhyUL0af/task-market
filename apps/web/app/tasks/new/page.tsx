@@ -9,6 +9,8 @@ export default function NewTaskPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [reward, setReward] = useState("");
+  const [difficulty, setDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
+  const [xpReward, setXpReward] = useState("250");
   const [status, setStatus] = useState<"DRAFT" | "OPEN">("OPEN");
   const [error, setError] = useState("");
 
@@ -22,6 +24,8 @@ export default function NewTaskPage() {
           title,
           description,
           reward: reward ? Number(reward) : undefined,
+          difficulty,
+          xpReward: Number(xpReward),
           status
         })
       });
@@ -68,6 +72,33 @@ export default function NewTaskPage() {
             onChange={(event) => setReward(event.target.value)}
             type="number"
             min={0}
+          />
+        </label>
+        <label className="field">
+          <span className="label">難度</span>
+          <select
+            className="select"
+            value={difficulty}
+            onChange={(event) => {
+              const next = event.target.value as "EASY" | "MEDIUM" | "HARD";
+              setDifficulty(next);
+              setXpReward(next === "EASY" ? "100" : next === "MEDIUM" ? "250" : "500");
+            }}
+          >
+            <option value="EASY">Easy / 100 XP</option>
+            <option value="MEDIUM">Medium / 250 XP</option>
+            <option value="HARD">Hard / 500 XP</option>
+          </select>
+        </label>
+        <label className="field">
+          <span className="label">XP 獎勵</span>
+          <input
+            className="input"
+            value={xpReward}
+            onChange={(event) => setXpReward(event.target.value)}
+            type="number"
+            min={0}
+            required
           />
         </label>
         <label className="field">

@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException
 } from "@nestjs/common";
-import { ApplicationStatus, SubmissionStatus, TaskStatus } from "@prisma/client";
+import {
+  ApplicationStatus,
+  Prisma,
+  SubmissionStatus,
+  TaskDifficulty,
+  TaskStatus
+} from "@prisma/client";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -17,24 +23,39 @@ import {
   UpdateTaskDto
 } from "./dto";
 
+const publicUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  xp: true,
+  level: true,
+  badges: {
+    include: {
+      badge: true
+    },
+    orderBy: { earnedAt: "desc" as const }
+  }
+};
+
 const taskInclude = {
-  creator: { select: { id: true, name: true, email: true, role: true } },
-  assignee: { select: { id: true, name: true, email: true, role: true } },
+  creator: { select: publicUserSelect },
+  assignee: { select: publicUserSelect },
   applications: {
     include: {
-      applicant: { select: { id: true, name: true, email: true, role: true } }
+      applicant: { select: publicUserSelect }
     },
     orderBy: { createdAt: "desc" as const }
   },
   submissions: {
     include: {
-      employee: { select: { id: true, name: true, email: true, role: true } }
+      employee: { select: publicUserSelect }
     },
     orderBy: { createdAt: "desc" as const }
   },
   comments: {
     include: {
-      author: { select: { id: true, name: true, email: true, role: true } }
+      author: { select: publicUserSelect }
     },
     orderBy: { createdAt: "asc" as const }
   }
@@ -90,6 +111,8 @@ export class TasksService {
         title: dto.title,
         description: dto.description,
         reward: dto.reward,
+        difficulty: dto.difficulty ?? TaskDifficulty.MEDIUM,
+        xpReward: dto.xpReward ?? this.defaultXpReward(dto.difficulty),
         status: dto.status ?? TaskStatus.DRAFT,
         creatorId: user.id
       },
@@ -214,7 +237,7 @@ export class TasksService {
         where: { id: submissionId },
         data: { status: dto.status as SubmissionStatus }
       });
-      await tx.task.update({
+      const task = await tx.task.update({
         where: { id: taskId },
         data: {
           status:
@@ -223,6 +246,9 @@ export class TasksService {
               : TaskStatus.IN_PROGRESS
         }
       });
+      if (dto.status === SubmissionStatus.ACCEPTED) {
+        await this.awardCompletion(tx, submission.employeeId, task.xpReward);
+      }
       return updated;
     });
   }
@@ -246,5 +272,105 @@ export class TasksService {
       throw new NotFoundException("Task not found");
     }
     return task;
+  }
+
+  private defaultXpReward(difficulty?: "EASY" | "MEDIUM" | "HARD") {
+    const rewards = {
+      EASY: 100,
+      MEDIUM: 250,
+      HARD: 500
+    };
+    return rewards[difficulty ?? "MEDIUM"];
+  }
+
+  private calculateLevel(xp: number) {
+    return Math.floor(xp / 100) + 1;
+  }
+
+  private async awardCompletion(
+    tx: Prisma.TransactionClient,
+    employeeId: string,
+    xpReward: number
+  ) {
+    const current = await tx.user.findUnique({
+      where: { id: employeeId },
+      select: { xp: true }
+    });
+    if (!current) {
+      return;
+    }
+
+    const nextXp = current.xp + xpReward;
+    await tx.user.update({
+      where: { id: employeeId },
+      data: {
+        xp: nextXp,
+        level: this.calculateLevel(nextXp)
+      }
+    });
+
+    const completedCount = await tx.task.count({
+      where: {
+        assigneeId: employeeId,
+        status: TaskStatus.DONE
+      }
+    });
+
+    await this.ensureDefaultBadges(tx);
+    const earnedCodes = [
+      completedCount >= 1 ? "FIRST_TASK" : null,
+      completedCount >= 5 ? "RELIABLE_WORKER" : null,
+      xpReward >= 500 ? "HIGH_VALUE" : null
+    ].filter((code): code is string => !!code);
+
+    for (const code of earnedCodes) {
+      const badge = await tx.badge.findUnique({ where: { code } });
+      if (badge) {
+        await tx.userBadge.upsert({
+          where: {
+            userId_badgeId: {
+              userId: employeeId,
+              badgeId: badge.id
+            }
+          },
+          update: {},
+          create: {
+            userId: employeeId,
+            badgeId: badge.id
+          }
+        });
+      }
+    }
+  }
+
+  private async ensureDefaultBadges(tx: Prisma.TransactionClient) {
+    const badges = [
+      {
+        code: "FIRST_TASK",
+        name: "First Task",
+        description: "完成第一個任務。",
+        icon: "1st"
+      },
+      {
+        code: "RELIABLE_WORKER",
+        name: "Reliable Worker",
+        description: "完成 5 個任務。",
+        icon: "5x"
+      },
+      {
+        code: "HIGH_VALUE",
+        name: "High Value",
+        description: "完成高 XP 任務。",
+        icon: "HV"
+      }
+    ];
+
+    for (const badge of badges) {
+      await tx.badge.upsert({
+        where: { code: badge.code },
+        update: badge,
+        create: badge
+      });
+    }
   }
 }

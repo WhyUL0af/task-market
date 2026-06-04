@@ -19,6 +19,12 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        xp: true,
+        level: true,
+        badges: {
+          include: { badge: true },
+          orderBy: { earnedAt: "desc" }
+        },
         createdAt: true
       },
       orderBy: { createdAt: "desc" }
@@ -45,6 +51,12 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        xp: true,
+        level: true,
+        badges: {
+          include: { badge: true },
+          orderBy: { earnedAt: "desc" }
+        },
         createdAt: true
       }
     });
@@ -82,8 +94,39 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        xp: true,
+        level: true,
+        badges: {
+          include: { badge: true },
+          orderBy: { earnedAt: "desc" }
+        },
         createdAt: true
       }
+    });
+  }
+
+  leaderboard() {
+    return this.prisma.user.findMany({
+      where: { role: "EMPLOYEE" },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        xp: true,
+        level: true,
+        badges: {
+          include: { badge: true },
+          orderBy: { earnedAt: "desc" }
+        },
+        _count: {
+          select: {
+            assignedTasks: { where: { status: "DONE" } }
+          }
+        }
+      },
+      orderBy: [{ xp: "desc" }, { level: "desc" }, { name: "asc" }],
+      take: 20
     });
   }
 

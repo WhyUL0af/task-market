@@ -13,6 +13,23 @@ export type User = {
   email: string;
   name: string;
   role: Role;
+  xp?: number;
+  level?: number;
+  badges?: UserBadge[];
+};
+
+export type Badge = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+};
+
+export type UserBadge = {
+  id: string;
+  earnedAt: string;
+  badge: Badge;
 };
 
 export type TaskApplication = {
@@ -41,6 +58,8 @@ export type Task = {
   title: string;
   description: string;
   reward?: number | null;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  xpReward: number;
   status: TaskStatus;
   creator: User;
   assignee?: User | null;

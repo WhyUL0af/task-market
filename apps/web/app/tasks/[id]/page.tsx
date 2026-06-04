@@ -112,6 +112,8 @@ export default function TaskDetailPage() {
             <span className={`badge ${statusClass(task.status)}`}>{task.status}</span>
             <span>建立者 {task.creator.name}</span>
             <span>{task.reward ? `預算 $${task.reward}` : "未設定預算"}</span>
+            <span>難度 {task.difficulty}</span>
+            <span>{task.xpReward} XP</span>
           </div>
         </div>
         {user?.role === "ADMIN" ? (
@@ -127,9 +129,25 @@ export default function TaskDetailPage() {
             <h2>任務內容</h2>
             <p>{task.description}</p>
             <div className="meta-row">
-              {task.assignee ? <span>負責人 {task.assignee.name}</span> : <span>尚未指派</span>}
+              {task.assignee ? (
+                <span>
+                  負責人 {task.assignee.name} / Lv.{task.assignee.level ?? 1}
+                </span>
+              ) : (
+                <span>尚未指派</span>
+              )}
               <span>申請 {task.applications.length}</span>
               <span>提交 {task.submissions.length}</span>
+            </div>
+            <div className="stat-grid" style={{ marginTop: 16 }}>
+              <div className="stat">
+                <span className="subtle">任務 XP</span>
+                <strong>{task.xpReward}</strong>
+              </div>
+              <div className="stat">
+                <span className="subtle">難度</span>
+                <strong>{task.difficulty}</strong>
+              </div>
             </div>
           </section>
 

@@ -29,6 +29,12 @@ export class UsersController {
     return this.users.list();
   }
 
+  @Get("leaderboard")
+  @Roles("ADMIN", "EMPLOYEE")
+  leaderboard() {
+    return this.users.leaderboard();
+  }
+
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.users.create(dto);

@@ -45,7 +45,7 @@ export default function TasksPage() {
                 <span className={`badge ${statusClass(task.status)}`}>
                   {task.status}
                 </span>
-                <span className="subtle">{task.reward ? `$${task.reward}` : "未設定預算"}</span>
+                <span className="subtle">{task.xpReward} XP</span>
               </div>
               <div>
                 <h2>{task.title}</h2>
@@ -54,6 +54,7 @@ export default function TasksPage() {
               <div className="meta-row">
                 <span>申請 {task.applications.length}</span>
                 <span>提交 {task.submissions.length}</span>
+                <span>難度 {task.difficulty}</span>
                 {task.assignee ? <span>負責人 {task.assignee.name}</span> : null}
               </div>
             </Link>

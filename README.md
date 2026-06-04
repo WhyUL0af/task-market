@@ -94,6 +94,17 @@ WEB_ORIGINS="http://localhost:3000,http://YOUR_PUBLIC_IP"
 - `ADMIN` 可以建立、編輯、刪除任務、審核申請、驗收或退回成果。
 - `EMPLOYEE` 可以瀏覽開放任務、申請任務、查看自己被指派的任務、提交成果。
 
+## 遊戲化功能
+
+- Admin 建立任務時可設定難度與 XP 獎勵。
+- 任務驗收通過後，指派員工會取得該任務 XP。
+- Level 依 XP 自動計算：每 100 XP 升 1 級。
+- 系統會自動解鎖徽章：
+  - `First Task`：完成第一個任務。
+  - `Reliable Worker`：完成 5 個任務。
+  - `High Value`：完成高 XP 任務。
+- `/leaderboard` 顯示員工 XP、Level、完成任務數與徽章。
+
 ## 常用指令
 
 ```bash

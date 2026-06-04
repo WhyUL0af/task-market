@@ -12,6 +12,15 @@ export class CreateTaskDto {
   @Min(0)
   reward?: number;
 
+  @IsOptional()
+  @IsEnum(["EASY", "MEDIUM", "HARD"])
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  xpReward?: number;
+
   @IsEnum(["DRAFT", "OPEN"])
   status?: "DRAFT" | "OPEN";
 }
@@ -29,6 +38,15 @@ export class UpdateTaskDto {
   @IsInt()
   @Min(0)
   reward?: number;
+
+  @IsOptional()
+  @IsEnum(["EASY", "MEDIUM", "HARD"])
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  xpReward?: number;
 
   @IsOptional()
   @IsEnum(["DRAFT", "OPEN", "CANCELLED"])

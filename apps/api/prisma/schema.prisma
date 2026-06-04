@@ -34,12 +34,20 @@ enum SubmissionStatus {
   REJECTED
 }
 
+enum TaskDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 model User {
   id                 String            @id @default(cuid())
   email              String            @unique
   name               String
   passwordHash       String
   role               Role              @default(EMPLOYEE)
+  xp                 Int               @default(0)
+  level              Int               @default(1)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   createdTasks       Task[]            @relation("CreatedTasks")
@@ -47,6 +55,7 @@ model User {
   applications       TaskApplication[]
   submissions        TaskSubmission[]
   comments           Comment[]
+  badges             UserBadge[]
 }
 
 model Task {
@@ -54,6 +63,8 @@ model Task {
   title          String
   description    String
   reward         Int?
+  difficulty     TaskDifficulty    @default(MEDIUM)
+  xpReward       Int               @default(100)
   status         TaskStatus        @default(DRAFT)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -64,6 +75,27 @@ model Task {
   applications   TaskApplication[]
   submissions    TaskSubmission[]
   comments       Comment[]
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String
+  icon        String
+  createdAt   DateTime    @default(now())
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  earnedAt DateTime @default(now())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
 }
 
 model TaskApplication {
