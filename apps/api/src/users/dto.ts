@@ -1,4 +1,10 @@
-import { IsEmail, IsEnum, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength
+} from "class-validator";
 
 export class CreateUserDto {
   @IsEmail()
@@ -13,4 +19,23 @@ export class CreateUserDto {
 
   @IsEnum(["ADMIN", "EMPLOYEE"])
   role!: "ADMIN" | "EMPLOYEE";
+}
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
+
+  @IsOptional()
+  @IsEnum(["ADMIN", "EMPLOYEE"])
+  role?: "ADMIN" | "EMPLOYEE";
 }

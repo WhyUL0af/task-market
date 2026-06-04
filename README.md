@@ -67,8 +67,20 @@ $env:ADMIN_PASSWORD="password123"
 npm run seed:admin
 ```
 
+如果從外部 IP 開網站，請確認前後端環境變數有對到：
+
+```env
+# apps/web/.env.local
+NEXT_PUBLIC_API_URL="http://YOUR_PUBLIC_IP:3001/api"
+
+# apps/api/.env
+WEB_ORIGINS="http://localhost:3000,http://YOUR_PUBLIC_IP"
+```
+
+修改後要重啟 API 和 Web。
+
 2. 到 `/login` 使用 Admin 登入。
-3. Admin 到 `/register` 從後台建立 Employee 帳號。
+3. Admin 到 `/users` 從後台建立或編輯 Employee 帳號。
 4. Admin 進入 `/tasks/new` 建立任務，狀態選 `OPEN`。
 5. 使用 Employee 登入，進入 `/tasks` 查看任務並申請。
 6. 使用 Admin 登入，進入任務詳情審核申請，核准後任務會變成 `IN_PROGRESS`。
