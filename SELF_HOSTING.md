@@ -2,7 +2,7 @@
 
 This guide is for hosting the project on your own computer and exposing it through:
 
-- Web: `https://yuloaf.work`
+- Web: `https://taskmarket.yuloaf.work`
 - API: `https://api.yuloaf.work`
 
 ## Recommended Option: Cloudflare Tunnel
@@ -72,7 +72,7 @@ Backend `apps/api/.env`:
 DATABASE_URL="postgresql://task_market:task_market@localhost:5433/task_market?schema=public"
 JWT_SECRET="replace-with-a-long-random-secret"
 PORT=3001
-WEB_ORIGIN="https://yuloaf.work"
+WEB_ORIGIN="https://taskmarket.yuloaf.work"
 ```
 
 Frontend `apps/web/.env.local`:
@@ -125,7 +125,7 @@ tunnel: YOUR_TUNNEL_ID
 credentials-file: C:\Users\<your-user>\.cloudflared\YOUR_TUNNEL_ID.json
 
 ingress:
-  - hostname: yuloaf.work
+  - hostname: taskmarket.yuloaf.work
     service: http://localhost:3000
   - hostname: api.yuloaf.work
     service: http://localhost:3001
@@ -141,7 +141,7 @@ cloudflared tunnel run task-market
 Now test:
 
 ```text
-https://yuloaf.work
+https://taskmarket.yuloaf.work
 https://api.yuloaf.work/api/tasks
 ```
 
@@ -271,12 +271,8 @@ C:\me\Projects\task-market\Caddyfile
 Use this content:
 
 ```caddyfile
-yuloaf.work {
+taskmarket.yuloaf.work {
   reverse_proxy localhost:3000
-}
-
-www.yuloaf.work {
-  redir https://yuloaf.work{uri}
 }
 
 api.yuloaf.work {
@@ -320,7 +316,7 @@ caddy run
 Open:
 
 ```text
-https://yuloaf.work
+https://taskmarket.yuloaf.work
 https://api.yuloaf.work/api/tasks
 ```
 

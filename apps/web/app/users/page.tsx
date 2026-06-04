@@ -105,6 +105,29 @@ export default function UsersPage() {
     }
   }
 
+  async function deleteUser(user: ManagedUser) {
+    const confirmed = window.confirm(
+      `確定要刪除 ${user.name} (${user.email}) 嗎？`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    try {
+      await api(`/users/${user.id}`, { method: "DELETE" });
+      setUsers((items) => items.filter((item) => item.id !== user.id));
+      setMessage("使用者已刪除");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "刪除使用者失敗，請確認此帳號沒有任務紀錄"
+      );
+    }
+  }
+
   if (currentUser?.role !== "ADMIN") {
     return (
       <section className="panel">
@@ -118,7 +141,7 @@ export default function UsersPage() {
     <section className="stack">
       <div>
         <h1>使用者管理</h1>
-        <p className="muted">建立帳號、修改資料、調整角色或重設密碼。</p>
+        <p className="muted">建立帳號、修改資料、調整角色、重設密碼或刪除帳號。</p>
       </div>
 
       <form className="panel form" onSubmit={createUser}>
@@ -161,13 +184,23 @@ export default function UsersPage() {
                   </div>
                   <span className="badge">{user.role}</span>
                 </div>
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() => startEdit(user)}
-                >
-                  編輯
-                </button>
+                <div className="actions">
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => startEdit(user)}
+                  >
+                    編輯
+                  </button>
+                  <button
+                    className="button danger"
+                    type="button"
+                    disabled={user.id === currentUser.id}
+                    onClick={() => deleteUser(user)}
+                  >
+                    刪除
+                  </button>
+                </div>
               </>
             )}
           </div>

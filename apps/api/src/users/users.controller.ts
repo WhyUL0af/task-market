@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -8,6 +9,10 @@ import {
   UseGuards
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import {
+  CurrentUser,
+  type CurrentUser as CurrentUserType
+} from "../auth/current-user.decorator";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { CreateUserDto, UpdateUserDto } from "./dto";
@@ -32,5 +37,10 @@ export class UsersController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateUserDto) {
     return this.users.update(id, dto);
+  }
+
+  @Delete(":id")
+  delete(@Param("id") id: string, @CurrentUser() user: CurrentUserType) {
+    return this.users.delete(id, user);
   }
 }

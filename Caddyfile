@@ -1,9 +1,5 @@
-yuloaf.work {
+taskmarket.yuloaf.work {
   reverse_proxy localhost:3000
-}
-
-www.yuloaf.work {
-  redir https://yuloaf.work{uri}
 }
 
 api.yuloaf.work {

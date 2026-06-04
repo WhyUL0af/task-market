@@ -2,7 +2,7 @@
 
 Production domain plan:
 
-- Web: `https://yuloaf.work`
+- Web: `https://taskmarket.yuloaf.work`
 - API: `https://api.yuloaf.work`
 - Database: managed PostgreSQL, such as Supabase, Neon, Railway, Render, or a VPS PostgreSQL instance
 
@@ -57,7 +57,7 @@ Set these in the backend hosting provider:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
 JWT_SECRET="replace-with-a-long-random-production-secret"
 PORT=3001
-WEB_ORIGIN="https://yuloaf.work"
+WEB_ORIGIN="https://taskmarket.yuloaf.work"
 ```
 
 Build command:

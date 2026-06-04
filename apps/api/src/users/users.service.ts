@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../prisma/prisma.service";
+import { CurrentUser } from "../auth/current-user.decorator";
 import { CreateUserDto, UpdateUserDto } from "./dto";
 
 @Injectable()
@@ -84,5 +85,39 @@ export class UsersService {
         createdAt: true
       }
     });
+  }
+
+  async delete(id: string, currentUser: CurrentUser) {
+    if (id === currentUser.id) {
+      throw new BadRequestException("You cannot delete your own account");
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            createdTasks: true,
+            assignedTasks: true,
+            applications: true,
+            submissions: true,
+            comments: true
+          }
+        }
+      }
+    });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    const hasHistory = Object.values(user._count).some((count) => count > 0);
+    if (hasHistory) {
+      throw new BadRequestException(
+        "Cannot delete a user that has task history"
+      );
+    }
+
+    await this.prisma.user.delete({ where: { id } });
+    return { ok: true };
   }
 }
