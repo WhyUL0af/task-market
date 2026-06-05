@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException
 } from "@nestjs/common";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { CreateUserDto, UpdateUserDto } from "./dto";

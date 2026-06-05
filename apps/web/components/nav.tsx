@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 import { clearSession, getCurrentUser } from "@/lib/auth";
 import type { User } from "@/lib/types";
 
@@ -12,10 +13,14 @@ export function Nav() {
     setUser(getCurrentUser());
   }, []);
 
-  function logout() {
-    clearSession();
-    setUser(null);
-    window.location.href = "/login";
+  async function logout() {
+    try {
+      await api<{ ok: boolean }>("/auth/logout", { method: "POST" });
+    } finally {
+      clearSession();
+      setUser(null);
+      window.location.href = "/login";
+    }
   }
 
   return (

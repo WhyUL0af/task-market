@@ -6,7 +6,7 @@ import { saveSession } from "@/lib/auth";
 import type { User } from "@/lib/types";
 
 type AuthResponse = {
-  accessToken: string;
+  accessToken?: string;
   user: User;
 };
 
@@ -23,7 +23,7 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
-      saveSession(result.accessToken, result.user);
+      saveSession(result.user, result.accessToken);
       window.location.href = "/tasks";
     } catch (err) {
       setError(err instanceof Error ? err.message : "登入失敗");

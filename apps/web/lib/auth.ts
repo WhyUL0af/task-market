@@ -5,8 +5,12 @@ import type { User } from "./types";
 const TOKEN_KEY = "task_market_token";
 const USER_KEY = "task_market_user";
 
-export function saveSession(accessToken: string, user: User) {
-  localStorage.setItem(TOKEN_KEY, accessToken);
+export function saveSession(user: User, accessToken?: string) {
+  if (accessToken) {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
