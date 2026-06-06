@@ -15,7 +15,13 @@ import {
 } from "../auth/current-user.decorator";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
-import { CreateUserDto, UpdateUserDto } from "./dto";
+import {
+  CreateProfileTagDto,
+  CreateUserDto,
+  UpdateProfileDto,
+  UpdateProfileTagDto,
+  UpdateUserDto
+} from "./dto";
 import { UsersService } from "./users.service";
 
 @UseGuards(AuthGuard("jwt"), RolesGuard)
@@ -33,6 +39,39 @@ export class UsersController {
   @Roles("ADMIN", "EMPLOYEE")
   leaderboard() {
     return this.users.leaderboard();
+  }
+
+  @Get("me")
+  @Roles("ADMIN", "EMPLOYEE")
+  me(@CurrentUser() user: CurrentUserType) {
+    return this.users.me(user);
+  }
+
+  @Patch("me")
+  @Roles("ADMIN", "EMPLOYEE")
+  updateMe(@CurrentUser() user: CurrentUserType, @Body() dto: UpdateProfileDto) {
+    return this.users.updateMe(user, dto);
+  }
+
+  @Get("profile-tags")
+  @Roles("ADMIN", "EMPLOYEE")
+  profileTags() {
+    return this.users.profileTags();
+  }
+
+  @Post("profile-tags")
+  createProfileTag(@Body() dto: CreateProfileTagDto) {
+    return this.users.createProfileTag(dto);
+  }
+
+  @Patch("profile-tags/:id")
+  updateProfileTag(@Param("id") id: string, @Body() dto: UpdateProfileTagDto) {
+    return this.users.updateProfileTag(id, dto);
+  }
+
+  @Delete("profile-tags/:id")
+  deleteProfileTag(@Param("id") id: string) {
+    return this.users.deleteProfileTag(id);
   }
 
   @Post()

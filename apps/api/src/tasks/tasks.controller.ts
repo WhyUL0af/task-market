@@ -56,6 +56,18 @@ export class TasksController {
     return this.tasks.delete(id);
   }
 
+  @Roles("ADMIN")
+  @Post(":id/allocate")
+  allocate(@Param("id") id: string) {
+    return this.tasks.allocate(id);
+  }
+
+  @Roles("ADMIN")
+  @Post(":id/complete")
+  complete(@Param("id") id: string) {
+    return this.tasks.complete(id);
+  }
+
   @Roles("EMPLOYEE")
   @Post(":id/applications")
   apply(

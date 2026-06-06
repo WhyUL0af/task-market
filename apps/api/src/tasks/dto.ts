@@ -1,4 +1,35 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested
+} from "class-validator";
+import { Type } from "class-transformer";
+
+export class TaskRoleRequirementDto {
+  @IsString()
+  roleTagId!: string;
+
+  @IsInt()
+  @Min(1)
+  headcount!: number;
+
+  @IsInt()
+  @Min(0)
+  budgetPercent!: number;
+
+  @IsInt()
+  @Min(0)
+  xpPercent!: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skillTagIds?: string[];
+}
 
 export class CreateTaskDto {
   @IsString()
@@ -23,6 +54,12 @@ export class CreateTaskDto {
 
   @IsEnum(["DRAFT", "OPEN"])
   status?: "DRAFT" | "OPEN";
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskRoleRequirementDto)
+  roleRequirements?: TaskRoleRequirementDto[];
 }
 
 export class UpdateTaskDto {
@@ -51,17 +88,27 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsEnum(["DRAFT", "OPEN", "CANCELLED"])
   status?: "DRAFT" | "OPEN" | "CANCELLED";
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskRoleRequirementDto)
+  roleRequirements?: TaskRoleRequirementDto[];
 }
 
 export class ApplyTaskDto {
   @IsOptional()
   @IsString()
   message?: string;
+
+  @IsOptional()
+  @IsString()
+  roleRequirementId?: string;
 }
 
 export class ReviewApplicationDto {
-  @IsEnum(["APPROVED", "REJECTED"])
-  status!: "APPROVED" | "REJECTED";
+  @IsEnum(["ACCEPTED", "REJECTED"])
+  status!: "ACCEPTED" | "REJECTED";
 }
 
 export class CreateSubmissionDto {

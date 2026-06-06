@@ -31,12 +31,11 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="split">
-      <div className="panel stack">
+    <section className="login-wrap">
+      <div className="panel stack login-panel">
         <div>
           <p className="page-kicker">Sign in</p>
           <h1>登入任務管理系統</h1>
-          <p className="muted">使用管理員或員工帳號進入工作台。</p>
         </div>
         <form className="form full" onSubmit={onSubmit}>
           <label className="field">
@@ -67,20 +66,6 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
-      <aside className="panel stack">
-        <h2>帳號由後台建立</h2>
-        <p className="muted">
-          公開註冊已關閉。請由 Admin 在使用者管理頁新增員工帳號。
-        </p>
-        <div className="record">
-          <strong>Admin</strong>
-          <p className="muted">發布任務、審核申請、驗收成果。</p>
-        </div>
-        <div className="record">
-          <strong>Employee</strong>
-          <p className="muted">申請任務、查看指派、提交成果。</p>
-        </div>
-      </aside>
     </section>
   );
 }

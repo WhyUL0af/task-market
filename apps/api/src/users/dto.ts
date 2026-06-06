@@ -1,6 +1,9 @@
 import {
+  IsArray,
+  IsBoolean,
   IsEmail,
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
   MinLength
@@ -38,4 +41,64 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(["ADMIN", "EMPLOYEE"])
   role?: "ADMIN" | "EMPLOYEE";
+}
+
+export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skillTagIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  preferredRoleIds?: string[];
+
+  @IsOptional()
+  @IsObject()
+  notificationSettings?: {
+    email?: boolean;
+    taskUpdates?: boolean;
+    reviewResults?: boolean;
+  };
+}
+
+export class NotificationSettingsDto {
+  @IsOptional()
+  @IsBoolean()
+  email?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  taskUpdates?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  reviewResults?: boolean;
+}
+
+export class CreateProfileTagDto {
+  @IsString()
+  name!: string;
+
+  @IsEnum(["SKILL", "ROLE"])
+  type!: "SKILL" | "ROLE";
+}
+
+export class UpdateProfileTagDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsEnum(["SKILL", "ROLE"])
+  type?: "SKILL" | "ROLE";
 }
