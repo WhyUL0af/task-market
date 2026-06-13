@@ -3,11 +3,13 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const badges = [
-  ["FIRST_TASK", "First Task", "首次完成任務", "1st"],
-  ["ON_TIME_MASTER", "On Time Master", "準時完成 10 次任務", "10x"],
-  ["TEAM_PLAYER", "Team Player", "參與 5 次多人任務", "Team"],
-  ["ROLE_EXPERT", "Role Expert", "同一角色完成 10 次任務", "Role"],
-  ["WEEKLY_CHALLENGER", "Weekly Challenger", "完成每週挑戰", "Week"]
+  ["FIRST_TASK", "首次完成", "首次完成任務", "1st"],
+  ["ON_TIME_MASTER", "準時大師", "準時完成 10 次任務", "10x"],
+  ["TEAM_PLAYER", "團隊合作者", "參與 5 次多人任務", "Team"],
+  ["ROLE_EXPERT", "領域專家", "同一角色完成 10 次任務", "Role"],
+  ["WEEKLY_CHALLENGER", "每週挑戰者", "完成每週挑戰", "Week"],
+  ["RELIABLE_WORKER", "可靠夥伴", "完成 5 個任務。", "5x"],
+  ["HIGH_VALUE", "卓越價值", "完成高 XP 任務。", "HV"]
 ];
 
 const titles = [

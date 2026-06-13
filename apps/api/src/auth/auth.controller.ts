@@ -29,9 +29,10 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.login(dto);
     const secureCookies = this.config.get<string>("COOKIE_SECURE") === "true";
+    const sameSite = secureCookies ? "none" : "lax";
     response.cookie("access_token", result.accessToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite,
       secure: secureCookies,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/"
@@ -43,7 +44,12 @@ export class AuthController {
 
   @Post("logout")
   logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie("access_token", { path: "/" });
+    const secureCookies = this.config.get<string>("COOKIE_SECURE") === "true";
+    response.clearCookie("access_token", {
+      path: "/",
+      sameSite: secureCookies ? "none" : "lax",
+      secure: secureCookies
+    });
     return { ok: true };
   }
 }

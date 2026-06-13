@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { AuthShell } from "@/components/auth-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Yuloaf Works",
+  title: "Task Market",
   description: "Task publishing and assignment workspace"
 };
 

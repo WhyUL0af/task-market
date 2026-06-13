@@ -43,8 +43,7 @@ function serializeUser(user: SelectedUser) {
 
   return {
     ...rest,
-    skillTags: tags.filter((tag) => tag.type === "SKILL"),
-    preferredRoles: tags.filter((tag) => tag.type === "ROLE")
+    skillTags: tags.filter((tag) => tag.type === "SKILL")
   };
 }
 
@@ -100,17 +99,30 @@ export class UsersService {
       }
     }
 
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
-        email: dto.email,
-        name: dto.name,
-        role: dto.role,
-        ...(dto.password
-          ? { passwordHash: await bcrypt.hash(dto.password, 10) }
-          : {})
-      },
-      select: userSelect
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: {
+          email: dto.email,
+          name: dto.name,
+          role: dto.role,
+          xp: dto.xp,
+          level: dto.level,
+          ...(dto.password
+            ? { passwordHash: await bcrypt.hash(dto.password, 10) }
+            : {})
+        },
+        select: userSelect
+      });
+
+      if (dto.skillTagIds) {
+        await this.replaceUserSkillTags(tx, id, dto.skillTagIds);
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id },
+        select: userSelect
+      });
     });
     return serializeUser(updated);
   }
@@ -196,14 +208,6 @@ export class UsersService {
             : {})
         }
       });
-
-      if (dto.skillTagIds) {
-        await this.replaceUserTags(tx, currentUser.id, "SKILL", dto.skillTagIds);
-      }
-
-      if (dto.preferredRoleIds) {
-        await this.replaceUserTags(tx, currentUser.id, "ROLE", dto.preferredRoleIds);
-      }
     });
 
     return this.me(currentUser);
@@ -211,6 +215,7 @@ export class UsersService {
 
   profileTags() {
     return this.prisma.profileTag.findMany({
+      where: { type: "SKILL" },
       orderBy: [{ type: "asc" }, { name: "asc" }]
     });
   }
@@ -224,7 +229,7 @@ export class UsersService {
     return this.prisma.profileTag.create({
       data: {
         name,
-        type: dto.type
+        type: "SKILL"
       }
     });
   }
@@ -240,7 +245,7 @@ export class UsersService {
       where: { id },
       data: {
         name,
-        type: dto.type
+        type: "SKILL"
       }
     });
   }
@@ -332,29 +337,28 @@ export class UsersService {
     return tag;
   }
 
-  private async replaceUserTags(
+  private async replaceUserSkillTags(
     tx: Prisma.TransactionClient,
     userId: string,
-    type: "SKILL" | "ROLE",
     tagIds: string[]
   ) {
     const uniqueTagIds = [...new Set(tagIds)];
     const tags = await tx.profileTag.findMany({
       where: {
         id: { in: uniqueTagIds },
-        type
+        type: "SKILL"
       },
       select: { id: true }
     });
 
     if (tags.length !== uniqueTagIds.length) {
-      throw new BadRequestException(`Invalid ${type.toLowerCase()} tag selection`);
+      throw new BadRequestException("Invalid skill tag selection");
     }
 
     await tx.userProfileTag.deleteMany({
       where: {
         userId,
-        tag: { type }
+        tag: { type: "SKILL" }
       }
     });
 
@@ -365,4 +369,5 @@ export class UsersService {
       });
     }
   }
+
 }

@@ -10,13 +10,20 @@ function extractJwtFromCookie(request: { cookies?: Record<string, string> }) {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {
+    const secret =
+      config.get<string>("JWT_SECRET") ??
+      (config.get<string>("NODE_ENV") === "production" ? undefined : "dev-secret");
+    if (!secret) {
+      throw new Error("JWT_SECRET must be set");
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         extractJwtFromCookie,
         ExtractJwt.fromAuthHeaderAsBearerToken()
       ]),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>("JWT_SECRET") ?? "dev-secret"
+      secretOrKey: secret
     });
   }
 

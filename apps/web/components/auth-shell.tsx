@@ -34,7 +34,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   if (!ready) {
     return (
       <main className="main">
-        <p className="notice">讀取登入狀態中...</p>
+        <p className="notice">Loading...</p>
       </main>
     );
   }
@@ -55,8 +55,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <>
       <header className="topbar">
         <Link className="brand" href="/tasks">
-          <span className="brand-mark">YW</span>
-          <span>Yuloaf Works</span>
+          <span className="brand-mark">TM</span>
+          <span>Task Market</span>
         </Link>
         <Nav />
       </header>

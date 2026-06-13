@@ -52,8 +52,6 @@ model User {
   email              String            @unique
   name               String
   bio                String?
-  skillTags          String[]          @default([])
-  preferredRoles     String[]          @default([])
   notificationSettings Json            @default("{\"email\":true,\"taskUpdates\":true,\"reviewResults\":true}")
   passwordHash       String
   role               Role              @default(EMPLOYEE)
@@ -63,7 +61,6 @@ model User {
   updatedAt          DateTime          @updatedAt
   createdTasks       Task[]            @relation("CreatedTasks")
   assignedTasks      Task[]            @relation("AssignedTasks")
-  assignedRoleRequirements TaskRoleRequirement[]
   applications       TaskApplication[]
   submissions        TaskSubmission[]
   comments           Comment[]
@@ -89,29 +86,11 @@ model Task {
   creator        User              @relation("CreatedTasks", fields: [creatorId], references: [id])
   assigneeId     String?
   assignee       User?             @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  roleRequirements TaskRoleRequirement[]
+  requirements   TaskRequirement[]
   applications   TaskApplication[]
   submissions    TaskSubmission[]
   comments       Comment[]
   expTransactions ExpTransaction[]
-}
-
-model TaskRoleRequirement {
-  id            String            @id @default(cuid())
-  headcount     Int               @default(1)
-  budgetPercent Int
-  xpPercent     Int               @default(100)
-  createdAt     DateTime          @default(now())
-  taskId        String
-  task          Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  roleTagId     String
-  roleTag       ProfileTag        @relation(fields: [roleTagId], references: [id])
-  assigneeId    String?
-  assignee      User?             @relation(fields: [assigneeId], references: [id])
-  skillTags     TaskRoleSkill[]
-  applications  TaskApplication[]
-
-  @@unique([taskId, roleTagId])
 }
 
 model Badge {
@@ -127,6 +106,7 @@ model Badge {
 model UserBadge {
   id       String   @id @default(cuid())
   earnedAt DateTime @default(now())
+  active   Boolean  @default(false)
   userId   String
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   badgeId  String
@@ -204,10 +184,36 @@ model ProfileTag {
   type      ProfileTagType
   createdAt DateTime         @default(now())
   users     UserProfileTag[]
-  taskRoleRequirements TaskRoleRequirement[]
-  taskRoleSkills TaskRoleSkill[]
+  taskRequirementSkills TaskRequirementSkill[]
 
   @@unique([type, name])
+}
+
+model TaskRequirement {
+  id            String                   @id @default(cuid())
+  name          String?
+  headcount     Int                      @default(1)
+  budgetPercent Int                      @default(0)
+  xpPercent     Int                      @default(0)
+  createdAt     DateTime                 @default(now())
+  taskId        String
+  task          Task                     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  skills        TaskRequirementSkill[]
+  applications  TaskApplication[]
+
+  @@index([taskId])
+}
+
+model TaskRequirementSkill {
+  id            String          @id @default(cuid())
+  requirementId String
+  skillTagId    String
+  createdAt     DateTime        @default(now())
+  requirement   TaskRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  skillTag      ProfileTag      @relation(fields: [skillTagId], references: [id], onDelete: Cascade)
+
+  @@unique([requirementId, skillTagId])
+  @@index([skillTagId])
 }
 
 model UserProfileTag {
@@ -220,16 +226,6 @@ model UserProfileTag {
   @@unique([userId, tagId])
 }
 
-model TaskRoleSkill {
-  id                String              @id @default(cuid())
-  roleRequirementId String?
-  roleRequirement   TaskRoleRequirement? @relation(fields: [roleRequirementId], references: [id], onDelete: Cascade)
-  skillTagId         String
-  skillTag           ProfileTag          @relation(fields: [skillTagId], references: [id])
-
-  @@unique([roleRequirementId, skillTagId])
-}
-
 model TaskApplication {
   id          String            @id @default(cuid())
   message     String?
@@ -238,8 +234,6 @@ model TaskApplication {
   updatedAt   DateTime          @updatedAt
   taskId      String
   task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  roleRequirementId String?
-  roleRequirement   TaskRoleRequirement? @relation(fields: [roleRequirementId], references: [id], onDelete: Cascade)
   applicantId String
   applicant   User              @relation(fields: [applicantId], references: [id])
   skillMatchScore Float?
@@ -250,8 +244,11 @@ model TaskApplication {
   assignedXp      Int?
   completedAt     DateTime?
   onTime          Boolean?
+  requirementId   String?
+  requirement     TaskRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
 
-  @@unique([taskId, applicantId, roleRequirementId])
+  @@unique([taskId, applicantId])
+  @@index([requirementId])
 }
 
 model TaskSubmission {

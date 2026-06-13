@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
@@ -18,11 +18,6 @@ export class LeaderboardController {
   @Get("completed-tasks")
   completedTasks() {
     return this.gamification.completionLeaderboard();
-  }
-
-  @Get("roles/:roleName")
-  roles(@Param("roleName") roleName: string) {
-    return this.gamification.roleLeaderboard(roleName);
   }
 
   @Get("on-time-rate")

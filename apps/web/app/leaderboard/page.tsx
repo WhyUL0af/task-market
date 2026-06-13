@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RankBadge } from "@/components/rank-badge";
 import { api } from "@/lib/api";
 import type { User } from "@/lib/types";
 
@@ -22,7 +23,6 @@ type ScoreRow = {
 type BoardConfig = {
   key: string;
   title: string;
-  description: string;
   valueLabel: string;
   rows: ScoreRow[];
 };
@@ -30,7 +30,6 @@ type BoardConfig = {
 export default function LeaderboardPage() {
   const [monthlyExp, setMonthlyExp] = useState<ScoreRow[]>([]);
   const [completed, setCompleted] = useState<ScoreRow[]>([]);
-  const [frontend, setFrontend] = useState<ScoreRow[]>([]);
   const [onTime, setOnTime] = useState<ScoreRow[]>([]);
   const [collaboration, setCollaboration] = useState<ScoreRow[]>([]);
   const [error, setError] = useState("");
@@ -40,14 +39,12 @@ export default function LeaderboardPage() {
     Promise.all([
       api<ScoreRow[]>("/leaderboard/monthly-exp"),
       api<ScoreRow[]>("/leaderboard/completed-tasks"),
-      api<ScoreRow[]>("/leaderboard/roles/前端工程師"),
       api<ScoreRow[]>("/leaderboard/on-time-rate"),
       api<ScoreRow[]>("/leaderboard/collaboration")
     ])
-      .then(([monthlyRows, completedRows, roleRows, onTimeRows, collaborationRows]) => {
+      .then(([monthlyRows, completedRows, onTimeRows, collaborationRows]) => {
         setMonthlyExp(monthlyRows);
         setCompleted(completedRows);
-        setFrontend(roleRows);
         setOnTime(onTimeRows);
         setCollaboration(collaborationRows);
       })
@@ -56,61 +53,30 @@ export default function LeaderboardPage() {
 
   const boards = useMemo<BoardConfig[]>(
     () => [
-      {
-        key: "monthly-exp",
-        title: "本月 EXP",
-        description: "本月透過完成任務與挑戰取得的經驗值。",
-        valueLabel: "EXP",
-        rows: monthlyExp
-      },
-      {
-        key: "completed",
-        title: "完成任務",
-        description: "累積完成並通過驗收的任務數。",
-        valueLabel: "件",
-        rows: completed
-      },
-      {
-        key: "frontend",
-        title: "前端職位",
-        description: "前端工程師職位的完成紀錄。",
-        valueLabel: "次",
-        rows: frontend
-      },
-      {
-        key: "on-time",
-        title: "準時率",
-        description: "已完成任務中準時完成的比例。",
-        valueLabel: "%",
-        rows: onTime
-      },
-      {
-        key: "collaboration",
-        title: "協作",
-        description: "多人任務中的參與完成紀錄。",
-        valueLabel: "次",
-        rows: collaboration
-      }
+      { key: "monthly-exp", title: "本月 EXP", valueLabel: "EXP", rows: monthlyExp },
+      { key: "completed", title: "完成任務", valueLabel: "件", rows: completed },
+      { key: "on-time", title: "準時率", valueLabel: "%", rows: onTime },
+      { key: "collaboration", title: "協作", valueLabel: "次", rows: collaboration }
     ],
-    [monthlyExp, completed, frontend, onTime, collaboration]
+    [monthlyExp, completed, onTime, collaboration]
   );
 
   const active = boards.find((board) => board.key === activeBoard) ?? boards[0];
   const topThree = active.rows.slice(0, 3);
   const remaining = active.rows.slice(3);
-  const totalParticipants = new Set(
-    boards.flatMap((board) => board.rows.map((row) => getUser(row).id).filter(Boolean))
-  ).size;
+
+  const totalParticipants = useMemo(() => {
+    return new Set(
+      boards.flatMap((board) => board.rows.map((row) => getUser(row).id).filter(Boolean))
+    ).size;
+  }, [boards]);
 
   return (
     <section className="leaderboard-page stack">
-      <div className="leaderboard-head">
+      <div className="page-head">
         <div>
-          <p className="page-kicker">Leaderboard</p>
+          <span className="page-kicker">Leaderboard</span>
           <h1>排行榜</h1>
-          <p className="muted">
-            排行榜只用來展示參與成果，不會影響任務錄取與分配。
-          </p>
         </div>
         <div className="leaderboard-summary">
           <div>
@@ -144,15 +110,12 @@ export default function LeaderboardPage() {
 
       <section className="leaderboard-board">
         <div className="board-title-row">
-          <div>
-            <h2>{active.title}</h2>
-            <p className="muted">{active.description}</p>
-          </div>
-          <span className="badge">前 20 名</span>
+          <h2>{active.title}</h2>
+          <span className="badge">Top 20</span>
         </div>
 
         {active.rows.length === 0 ? (
-          <div className="empty">目前還沒有排行榜資料</div>
+          <div className="empty">目前沒有排行榜資料。</div>
         ) : (
           <>
             <div className="podium-grid">
@@ -167,11 +130,11 @@ export default function LeaderboardPage() {
             </div>
 
             {remaining.length > 0 ? (
-              <div className="ranking-table" role="table" aria-label={`${active.title}排行榜`}>
+              <div className="ranking-table" role="table" aria-label={active.title}>
                 <div className="ranking-header" role="row">
                   <span>排名</span>
                   <span>成員</span>
-                  <span>等級</span>
+                  <span>稱號</span>
                   <span>分數</span>
                 </div>
                 {remaining.map((row, index) => (
@@ -207,11 +170,13 @@ function RankCard({
     <article className={`rank-card rank-${rank}`}>
       <div className="rank-card-top">
         <span className="rank-medal">{rank}</span>
-        <span className="level-badge">Lv.{user.level ?? "-"}</span>
+        <RankBadge level={user.level ?? 1} />
       </div>
       <div>
-        <h3>{user.name ?? "未命名成員"}</h3>
-        <p className="muted">{user.email ?? "沒有 email"}</p>
+        <h3 style={{ margin: 0 }}>{user.name ?? "未命名使用者"}</h3>
+        <p className="muted" style={{ margin: "4px 0 0", fontSize: "12px" }}>
+          {user.email ?? "-"}
+        </p>
       </div>
       <strong className="rank-score">
         {score}
@@ -235,12 +200,14 @@ function RankingRow({
 
   return (
     <div className="ranking-row" role="row">
-      <span className="rank-number">{rank}</span>
+      <span className="rank-number"># {rank}</span>
       <div>
-        <strong>{user.name ?? "未命名成員"}</strong>
-        <p className="muted">{user.email ?? "沒有 email"}</p>
+        <strong style={{ display: "block" }}>{user.name ?? "未命名使用者"}</strong>
+        <span className="muted" style={{ fontSize: "12px" }}>{user.email ?? "-"}</span>
       </div>
-      <span className="level-badge">Lv.{user.level ?? "-"}</span>
+      <div>
+        <RankBadge level={user.level ?? 1} />
+      </div>
       <span className="score-pill">
         {score} {valueLabel}
       </span>

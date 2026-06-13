@@ -13,7 +13,9 @@ import { LoginRateLimitGuard } from "./login-rate-limit.guard";
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "dev-secret",
+        secret:
+          config.get<string>("JWT_SECRET") ??
+          (config.get<string>("NODE_ENV") === "production" ? undefined : "dev-secret"),
         signOptions: { expiresIn: "7d" }
       })
     })

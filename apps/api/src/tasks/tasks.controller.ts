@@ -57,12 +57,6 @@ export class TasksController {
   }
 
   @Roles("ADMIN")
-  @Post(":id/allocate")
-  allocate(@Param("id") id: string) {
-    return this.tasks.allocate(id);
-  }
-
-  @Roles("ADMIN")
   @Post(":id/complete")
   complete(@Param("id") id: string) {
     return this.tasks.complete(id);

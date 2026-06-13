@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
@@ -9,9 +10,10 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 
-export class TaskRoleRequirementDto {
+export class TaskRequirementDto {
+  @IsOptional()
   @IsString()
-  roleTagId!: string;
+  name?: string;
 
   @IsInt()
   @Min(1)
@@ -44,6 +46,10 @@ export class CreateTaskDto {
   reward?: number;
 
   @IsOptional()
+  @IsDateString()
+  dueAt?: string;
+
+  @IsOptional()
   @IsEnum(["EASY", "MEDIUM", "HARD"])
   difficulty?: "EASY" | "MEDIUM" | "HARD";
 
@@ -58,8 +64,8 @@ export class CreateTaskDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => TaskRoleRequirementDto)
-  roleRequirements?: TaskRoleRequirementDto[];
+  @Type(() => TaskRequirementDto)
+  requirements?: TaskRequirementDto[];
 }
 
 export class UpdateTaskDto {
@@ -77,6 +83,10 @@ export class UpdateTaskDto {
   reward?: number;
 
   @IsOptional()
+  @IsDateString()
+  dueAt?: string;
+
+  @IsOptional()
   @IsEnum(["EASY", "MEDIUM", "HARD"])
   difficulty?: "EASY" | "MEDIUM" | "HARD";
 
@@ -92,8 +102,8 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => TaskRoleRequirementDto)
-  roleRequirements?: TaskRoleRequirementDto[];
+  @Type(() => TaskRequirementDto)
+  requirements?: TaskRequirementDto[];
 }
 
 export class ApplyTaskDto {
@@ -103,7 +113,7 @@ export class ApplyTaskDto {
 
   @IsOptional()
   @IsString()
-  roleRequirementId?: string;
+  requirementId?: string;
 }
 
 export class ReviewApplicationDto {

@@ -3,9 +3,13 @@ import {
   IsBoolean,
   IsEmail,
   IsEnum,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
+  Matches,
+  Max,
+  Min,
   MinLength
 } from "class-validator";
 
@@ -18,6 +22,9 @@ export class CreateUserDto {
 
   @IsString()
   @MinLength(8)
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
+    message: "Password must contain at least one letter and one number"
+  })
   password!: string;
 
   @IsEnum(["ADMIN", "EMPLOYEE"])
@@ -36,11 +43,30 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @MinLength(8)
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
+    message: "Password must contain at least one letter and one number"
+  })
   password?: string;
 
   @IsOptional()
   @IsEnum(["ADMIN", "EMPLOYEE"])
   role?: "ADMIN" | "EMPLOYEE";
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  xp?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(8)
+  level?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skillTagIds?: string[];
 }
 
 export class UpdateProfileDto {
@@ -51,16 +77,6 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   bio?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  skillTagIds?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  preferredRoleIds?: string[];
 
   @IsOptional()
   @IsObject()
@@ -89,8 +105,8 @@ export class CreateProfileTagDto {
   @IsString()
   name!: string;
 
-  @IsEnum(["SKILL", "ROLE"])
-  type!: "SKILL" | "ROLE";
+  @IsEnum(["SKILL"])
+  type!: "SKILL";
 }
 
 export class UpdateProfileTagDto {
@@ -99,6 +115,6 @@ export class UpdateProfileTagDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(["SKILL", "ROLE"])
-  type?: "SKILL" | "ROLE";
+  @IsEnum(["SKILL"])
+  type?: "SKILL";
 }

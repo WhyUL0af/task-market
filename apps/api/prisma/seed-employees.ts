@@ -9,7 +9,7 @@ async function main() {
     return {
       name,
       email: `${name}@ntub.edu.tw`,
-      password: name
+      password: `ntub${name}`
     };
   });
 

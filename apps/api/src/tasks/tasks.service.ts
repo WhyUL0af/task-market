@@ -6,6 +6,7 @@
 } from "@nestjs/common";
 import {
   ApplicationStatus,
+  Prisma,
   SubmissionStatus,
   TaskDifficulty,
   TaskStatus
@@ -41,32 +42,24 @@ const publicUserSelect = {
 const taskInclude = {
   creator: { select: publicUserSelect },
   assignee: { select: publicUserSelect },
-  roleRequirements: {
+  requirements: {
     include: {
-      roleTag: true,
-      skillTags: {
-        include: {
-          skillTag: true
-        },
+      skills: {
+        include: { skillTag: true },
         orderBy: { skillTag: { name: "asc" as const } }
-      },
-      assignee: { select: publicUserSelect }
+      }
     },
     orderBy: { createdAt: "asc" as const }
   },
   applications: {
     include: {
       applicant: { select: publicUserSelect },
-      roleRequirement: {
+      requirement: {
         include: {
-          roleTag: true,
-          skillTags: {
-            include: {
-              skillTag: true
-            },
+          skills: {
+            include: { skillTag: true },
             orderBy: { skillTag: { name: "asc" as const } }
-          },
-          assignee: { select: publicUserSelect }
+          }
         }
       }
     },
@@ -136,32 +129,19 @@ export class TasksService {
   }
 
   async create(dto: CreateTaskDto, user: CurrentUser) {
-    await this.validateRoleRequirements(dto.roleRequirements);
+    await this.validateRequirements(dto.requirements);
     return this.prisma.task.create({
       data: {
         title: dto.title,
         description: dto.description,
         reward: dto.reward,
+        dueAt: dto.dueAt ? new Date(dto.dueAt) : undefined,
         difficulty: dto.difficulty ?? TaskDifficulty.MEDIUM,
         xpReward: dto.xpReward ?? this.defaultXpReward(dto.difficulty),
         status: dto.status ?? TaskStatus.DRAFT,
         creatorId: user.id,
-        roleRequirements: dto.roleRequirements
-            ? {
-              create: dto.roleRequirements.map((item) => ({
-                roleTagId: item.roleTagId,
-                headcount: item.headcount,
-                budgetPercent: item.budgetPercent,
-                xpPercent: item.xpPercent,
-                skillTags: item.skillTagIds?.length
-                  ? {
-                      create: item.skillTagIds.map((skillTagId) => ({
-                        skillTagId
-                      }))
-                    }
-                  : undefined
-              }))
-            }
+        requirements: dto.requirements?.length
+          ? { create: dto.requirements.map((requirement) => this.requirementCreateData(requirement)) }
           : undefined
       },
       include: taskInclude
@@ -170,33 +150,24 @@ export class TasksService {
 
   async update(id: string, dto: UpdateTaskDto) {
     await this.ensureTask(id);
-    await this.validateRoleRequirements(dto.roleRequirements);
+    await this.validateRequirements(dto.requirements);
     return this.prisma.task.update({
       where: { id },
       data: {
         title: dto.title,
         description: dto.description,
         reward: dto.reward,
+        dueAt: dto.dueAt ? new Date(dto.dueAt) : undefined,
         difficulty: dto.difficulty,
         xpReward: dto.xpReward,
         status: dto.status,
-        ...(dto.roleRequirements
+        ...(dto.requirements
           ? {
-              roleRequirements: {
+              requirements: {
                 deleteMany: {},
-                create: dto.roleRequirements.map((item) => ({
-                  roleTagId: item.roleTagId,
-                  headcount: item.headcount,
-                  budgetPercent: item.budgetPercent,
-                  xpPercent: item.xpPercent,
-                  skillTags: item.skillTagIds?.length
-                    ? {
-                        create: item.skillTagIds.map((skillTagId) => ({
-                          skillTagId
-                        }))
-                      }
-                    : undefined
-                }))
+                create: dto.requirements.map((requirement) =>
+                  this.requirementCreateData(requirement)
+                )
               }
             }
           : {})
@@ -214,7 +185,7 @@ export class TasksService {
   async apply(id: string, dto: ApplyTaskDto, user: CurrentUser) {
     const task = await this.prisma.task.findUnique({
       where: { id },
-      include: { roleRequirements: true }
+      include: { requirements: { include: { skills: true } } }
     });
     if (!task) {
       throw new NotFoundException("Task not found");
@@ -222,45 +193,48 @@ export class TasksService {
     if (task.status !== TaskStatus.OPEN && task.status !== TaskStatus.APPLIED) {
       throw new BadRequestException("Task is not open for applications");
     }
-    if (task.roleRequirements.length > 0 && !dto.roleRequirementId) {
-      throw new BadRequestException("Please select a position to apply for");
-    }
-    const roleRequirement = dto.roleRequirementId
-      ? task.roleRequirements.find((item) => item.id === dto.roleRequirementId)
-      : null;
-    if (dto.roleRequirementId && !roleRequirement) {
-      throw new BadRequestException("Position requirement does not belong to this task");
-    }
-    if (roleRequirement) {
-      const acceptedForRole = await this.prisma.taskApplication.count({
-        where: {
-          taskId: id,
-          roleRequirementId: roleRequirement.id,
-          status: ApplicationStatus.ACCEPTED
-        }
-      });
-      if (acceptedForRole >= roleRequirement.headcount) {
-        throw new BadRequestException("This position is already full");
-      }
-    }
-
     const existingApplication = await this.prisma.taskApplication.findFirst({
       where: {
         taskId: id,
-        applicantId: user.id,
-        roleRequirementId: dto.roleRequirementId ?? null
+        applicantId: user.id
       }
     });
     if (existingApplication) {
-      throw new BadRequestException("You have already applied for this position");
+      throw new BadRequestException("You have already applied for this task");
     }
+
+    let selectedRequirement:
+      | (typeof task.requirements)[number]
+      | undefined;
+    if (task.requirements.length > 0) {
+      selectedRequirement = task.requirements.find((item) => item.id === dto.requirementId);
+      if (!selectedRequirement) {
+        throw new BadRequestException("Please select a recruitment requirement");
+      }
+      const acceptedCount = await this.prisma.taskApplication.count({
+        where: {
+          taskId: id,
+          requirementId: selectedRequirement.id,
+          status: ApplicationStatus.ACCEPTED
+        }
+      });
+      if (acceptedCount >= selectedRequirement.headcount) {
+        throw new BadRequestException("This requirement is already full");
+      }
+    }
+
+    const skillMatchScore = await this.calculateSkillMatchScore(
+      user.id,
+      selectedRequirement?.skills.map((item) => item.skillTagId) ?? []
+    );
 
     const application = await this.prisma.taskApplication.create({
       data: {
         taskId: id,
         applicantId: user.id,
         message: dto.message,
-        roleRequirementId: dto.roleRequirementId
+        skillMatchScore,
+        requirementId: selectedRequirement?.id
       }
     });
 
@@ -281,51 +255,68 @@ export class TasksService {
   ) {
     const application = await this.prisma.taskApplication.findUnique({
       where: { id: applicationId },
-      include: { roleRequirement: true }
+      include: {
+        task: { include: { requirements: true } },
+        requirement: true
+      }
     });
     if (!application || application.taskId !== taskId) {
       throw new NotFoundException("Application not found");
     }
 
     return this.prisma.$transaction(async (tx) => {
+      let assignedBudget: number | undefined;
+      let assignedXp: number | undefined;
+      if (dto.status === ApplicationStatus.ACCEPTED && application.requirement) {
+        const acceptedCount = await tx.taskApplication.count({
+          where: {
+            taskId,
+            requirementId: application.requirementId,
+            status: ApplicationStatus.ACCEPTED,
+            id: { not: applicationId }
+          }
+        });
+        if (acceptedCount >= application.requirement.headcount) {
+          throw new BadRequestException("This requirement is already full");
+        }
+        assignedBudget = this.calculateRequirementShare(
+          application.task.reward ?? 0,
+          application.requirement.budgetPercent,
+          application.requirement.headcount
+        );
+        assignedXp = this.calculateRequirementShare(
+          application.task.xpReward,
+          application.requirement.xpPercent,
+          application.requirement.headcount
+        );
+      }
+
       const updated = await tx.taskApplication.update({
         where: { id: applicationId },
-        data: { status: dto.status as ApplicationStatus }
+        data: {
+          status: dto.status as ApplicationStatus,
+          assignedBudget,
+          assignedXp
+        }
       });
 
       if (dto.status === ApplicationStatus.ACCEPTED) {
-        if (application.roleRequirementId) {
-          const acceptedForRole = await tx.taskApplication.count({
+        if (application.requirementId) {
+          const acceptedForRequirement = await tx.taskApplication.count({
             where: {
               taskId,
-              roleRequirementId: application.roleRequirementId,
+              requirementId: application.requirementId,
               status: ApplicationStatus.ACCEPTED
             }
           });
-          if (
-            application.roleRequirement &&
-            acceptedForRole > application.roleRequirement.headcount
-          ) {
-            throw new BadRequestException("This position is already full");
-          }
-          if (acceptedForRole === 1) {
-            await tx.taskRoleRequirement.update({
-              where: { id: application.roleRequirementId },
-              data: { assigneeId: application.applicantId }
-            });
-          }
-          if (
-            application.roleRequirement &&
-            acceptedForRole >= application.roleRequirement.headcount
-          ) {
+          if (acceptedForRequirement >= (application.requirement?.headcount ?? 1)) {
             await tx.taskApplication.updateMany({
               where: {
                 taskId,
-                id: { not: applicationId },
-                roleRequirementId: application.roleRequirementId,
+                requirementId: application.requirementId,
                 status: ApplicationStatus.PENDING
               },
-              data: { status: ApplicationStatus.REJECTED }
+              data: { status: ApplicationStatus.WAITLIST }
             });
           }
         }
@@ -338,29 +329,12 @@ export class TasksService {
           },
           data: { status: ApplicationStatus.REJECTED }
         });
-        const roleRequirements = await tx.taskRoleRequirement.findMany({
-          where: { taskId },
-          select: { id: true, headcount: true }
-        });
-        const acceptedCounts = await Promise.all(
-          roleRequirements.map((role) =>
-            tx.taskApplication.count({
-              where: {
-                taskId,
-                roleRequirementId: role.id,
-                status: ApplicationStatus.ACCEPTED
-              }
-            })
-          )
-        );
-        const allRolesFilled = roleRequirements.every(
-          (role, index) => acceptedCounts[index] >= role.headcount
-        );
+        const shouldStartTask = await this.isTaskFullyAssigned(tx, taskId);
         await tx.task.update({
           where: { id: taskId },
           data: {
             assigneeId: application.applicantId,
-            status: allRolesFilled ? TaskStatus.IN_PROGRESS : TaskStatus.APPLIED
+            status: shouldStartTask ? TaskStatus.IN_PROGRESS : TaskStatus.APPLIED
           }
         });
       }
@@ -369,173 +343,31 @@ export class TasksService {
     });
   }
 
-  async allocate(taskId: string) {
-    const task = await this.prisma.task.findUnique({
-      where: { id: taskId },
-      include: {
-        roleRequirements: {
-          include: {
-            skillTags: true,
-            applications: {
-              where: { status: ApplicationStatus.PENDING },
-              include: {
-                applicant: {
-                  include: {
-                    profileTags: { include: { tag: true } },
-                    assignedTasks: { select: { status: true } }
-                  }
-                }
-              },
-              orderBy: { createdAt: "asc" }
-            }
-          },
-          orderBy: { createdAt: "asc" }
-        }
-      }
-    });
-    if (!task) {
-      throw new NotFoundException("Task not found");
-    }
-    if (task.roleRequirements.length === 0) {
-      throw new BadRequestException("This task does not have position requirements");
-    }
-
-    const acceptedUserIds = new Set<string>();
-    const acceptedApplicationIds = new Set<string>();
-    const scoreUpdates: Array<{
-      id: string;
-      skillMatchScore: number;
-      workloadScore: number;
-      completionRateScore: number;
-      finalScore: number;
-      assignedBudget: number;
-      assignedXp: number;
-    }> = [];
-
-    for (const role of task.roleRequirements) {
-      const assignedBudget = this.calculateShare(
-        task.reward ?? 0,
-        role.budgetPercent,
-        role.headcount
-      );
-      const assignedXp = this.calculateShare(
-        task.xpReward,
-        role.xpPercent,
-        role.headcount
-      );
-      const ranked = role.applications
-        .map((application) => {
-          const scores = this.scoreApplication(
-            role.skillTags.map((item) => item.skillTagId),
-            application.applicant
-          );
-          return {
-            application,
-            ...scores,
-            assignedBudget,
-            assignedXp
-          };
-        })
-        .sort((a, b) => b.finalScore - a.finalScore);
-
-      let acceptedForRole = 0;
-      for (const candidate of ranked) {
-        const alreadyAccepted = acceptedUserIds.has(candidate.application.applicantId);
-        const shouldAccept = !alreadyAccepted && acceptedForRole < role.headcount;
-        if (shouldAccept) {
-          acceptedUserIds.add(candidate.application.applicantId);
-          acceptedApplicationIds.add(candidate.application.id);
-          acceptedForRole += 1;
-        }
-
-        scoreUpdates.push({
-          id: candidate.application.id,
-          skillMatchScore: candidate.skillMatchScore,
-          workloadScore: candidate.workloadScore,
-          completionRateScore: candidate.completionRateScore,
-          finalScore: candidate.finalScore,
-          assignedBudget: candidate.assignedBudget,
-          assignedXp: candidate.assignedXp
-        });
-      }
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      for (const update of scoreUpdates) {
-        const status = acceptedApplicationIds.has(update.id)
-          ? ApplicationStatus.ACCEPTED
-          : ApplicationStatus.WAITLIST;
-        await tx.taskApplication.update({
-          where: { id: update.id },
-          data: {
-            status,
-            skillMatchScore: update.skillMatchScore,
-            workloadScore: update.workloadScore,
-            completionRateScore: update.completionRateScore,
-            finalScore: update.finalScore,
-            assignedBudget: status === ApplicationStatus.ACCEPTED ? update.assignedBudget : null,
-            assignedXp: status === ApplicationStatus.ACCEPTED ? update.assignedXp : null
-          }
-        });
-      }
-
-      for (const userId of acceptedUserIds) {
-        await tx.taskApplication.updateMany({
-          where: {
-            taskId,
-            applicantId: userId,
-            id: { notIn: [...acceptedApplicationIds] },
-            status: ApplicationStatus.WAITLIST
-          },
-          data: { status: ApplicationStatus.REJECTED }
-        });
-      }
-
-      for (const role of task.roleRequirements) {
-        const accepted = await tx.taskApplication.findFirst({
-          where: {
-            taskId,
-            roleRequirementId: role.id,
-            status: ApplicationStatus.ACCEPTED
-          },
-          orderBy: { finalScore: "desc" }
-        });
-        await tx.taskRoleRequirement.update({
-          where: { id: role.id },
-          data: { assigneeId: accepted?.applicantId ?? null }
-        });
-      }
-
-      if (acceptedApplicationIds.size > 0) {
-        await tx.task.update({
-          where: { id: taskId },
-          data: {
-            assigneeId: [...acceptedUserIds][0],
-            status: TaskStatus.IN_PROGRESS
-          }
-        });
-      }
-    });
-
-    return this.findOne(taskId, { id: task.creatorId, email: "", role: "ADMIN" });
-  }
-
   async submit(taskId: string, dto: CreateSubmissionDto, user: CurrentUser) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
-      include: { roleRequirements: true }
+      include: {
+        applications: {
+          where: { applicantId: user.id, status: ApplicationStatus.ACCEPTED },
+          select: { id: true }
+        },
+        submissions: {
+          where: { employeeId: user.id },
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
     if (!task) {
       throw new NotFoundException("Task not found");
     }
-    const isRoleAssignee = task.roleRequirements.some(
-      (item) => item.assigneeId === user.id
-    );
-    if (task.assigneeId !== user.id && !isRoleAssignee) {
-      throw new ForbiddenException("Only the assignee can submit work");
+    if (task.applications.length === 0) {
+      throw new ForbiddenException("Only accepted members can submit work");
     }
-    if (task.status !== TaskStatus.IN_PROGRESS) {
+    if (task.status !== TaskStatus.IN_PROGRESS && task.status !== TaskStatus.REVIEW) {
       throw new BadRequestException("Task is not in progress");
+    }
+    if (task.submissions.some((item) => item.status === SubmissionStatus.PENDING)) {
+      throw new BadRequestException("You already have a submission waiting for review");
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -571,7 +403,7 @@ export class TasksService {
       data: { status: dto.status as SubmissionStatus }
     });
     if (dto.status === SubmissionStatus.ACCEPTED) {
-      await this.gamification.completeTask(taskId);
+      await this.syncTaskReviewStatus(taskId);
       return updated;
     }
     await this.prisma.task.update({
@@ -581,7 +413,8 @@ export class TasksService {
     return updated;
   }
 
-  complete(taskId: string) {
+  async complete(taskId: string) {
+    await this.ensureTaskReadyToClose(taskId);
     return this.gamification.completeTask(taskId);
   }
 
@@ -606,121 +439,197 @@ export class TasksService {
     return task;
   }
 
-  private async validateRoleRequirements(
-    roleRequirements?: {
-      roleTagId: string;
+  private async syncTaskReviewStatus(taskId: string) {
+    const acceptedApplications = await this.prisma.taskApplication.findMany({
+      where: { taskId, status: ApplicationStatus.ACCEPTED },
+      select: { applicantId: true }
+    });
+    const acceptedUserIds = [...new Set(acceptedApplications.map((item) => item.applicantId))];
+    if (acceptedUserIds.length === 0) {
+      return;
+    }
+
+    const submissions = await this.prisma.taskSubmission.findMany({
+      where: { taskId, employeeId: { in: acceptedUserIds } },
+      select: { employeeId: true, status: true, createdAt: true },
+      orderBy: { createdAt: "desc" }
+    });
+    const latestByUser = this.latestSubmissionStatusByUser(submissions);
+    const hasPendingSubmission = acceptedUserIds.some(
+      (userId) => latestByUser.get(userId) === SubmissionStatus.PENDING
+    );
+    const allAcceptedUsersReviewed = acceptedUserIds.every((userId) =>
+      latestByUser.get(userId) === SubmissionStatus.ACCEPTED
+    );
+
+    await this.prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status:
+          hasPendingSubmission || allAcceptedUsersReviewed
+            ? TaskStatus.REVIEW
+            : TaskStatus.IN_PROGRESS
+      }
+    });
+  }
+
+  private async ensureTaskReadyToClose(taskId: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        applications: {
+          where: { status: ApplicationStatus.ACCEPTED },
+          select: { applicantId: true }
+        },
+        submissions: {
+          select: { employeeId: true, status: true, createdAt: true },
+          orderBy: { createdAt: "desc" }
+        }
+      }
+    });
+    if (!task) {
+      throw new NotFoundException("Task not found");
+    }
+    if (task.status === TaskStatus.DONE) {
+      throw new BadRequestException("Task is already completed");
+    }
+
+    const acceptedUserIds = [...new Set(task.applications.map((item) => item.applicantId))];
+    if (acceptedUserIds.length === 0) {
+      throw new BadRequestException("No accepted members to close this task");
+    }
+
+    const latestByUser = this.latestSubmissionStatusByUser(task.submissions);
+    const missingAcceptedSubmissions = acceptedUserIds.filter(
+      (userId) => latestByUser.get(userId) !== SubmissionStatus.ACCEPTED
+    );
+    if (missingAcceptedSubmissions.length > 0) {
+      throw new BadRequestException(
+        "All accepted members must have accepted submissions before closing the task"
+      );
+    }
+  }
+
+  private latestSubmissionStatusByUser(
+    submissions: Array<{ employeeId: string; status: SubmissionStatus; createdAt: Date }>
+  ) {
+    const latestByUser = new Map<string, SubmissionStatus>();
+    for (const submission of submissions) {
+      if (!latestByUser.has(submission.employeeId)) {
+        latestByUser.set(submission.employeeId, submission.status);
+      }
+    }
+    return latestByUser;
+  }
+
+  private requirementCreateData(requirement: {
+    name?: string;
+    headcount: number;
+    budgetPercent: number;
+    xpPercent: number;
+    skillTagIds?: string[];
+  }) {
+    const skillTagIds = [...new Set(requirement.skillTagIds ?? [])];
+    return {
+      name: requirement.name?.trim() || undefined,
+      headcount: requirement.headcount,
+      budgetPercent: requirement.budgetPercent,
+      xpPercent: requirement.xpPercent,
+      skills: skillTagIds.length
+        ? {
+            create: skillTagIds.map((skillTagId) => ({
+              skillTagId
+            }))
+          }
+        : undefined
+    };
+  }
+
+  private async validateRequirements(
+    requirements?: Array<{
       headcount: number;
       budgetPercent: number;
       xpPercent: number;
       skillTagIds?: string[];
-    }[]
+    }>
   ) {
-    if (!roleRequirements) {
+    if (!requirements || requirements.length === 0) {
       return;
     }
-    if (roleRequirements.length === 0) {
+    const budgetTotal = requirements.reduce((total, item) => total + item.budgetPercent, 0);
+    const xpTotal = requirements.reduce((total, item) => total + item.xpPercent, 0);
+    if (budgetTotal !== 100) {
+      throw new BadRequestException("Recruitment requirement budget percentages must total 100");
+    }
+    if (xpTotal !== 100) {
+      throw new BadRequestException("Recruitment requirement EXP percentages must total 100");
+    }
+    const skillTagIds = requirements.flatMap((item) => item.skillTagIds ?? []);
+    await this.validateSkillTags(skillTagIds);
+  }
+
+  private async validateSkillTags(skillTagIds?: string[]) {
+    if (!skillTagIds || skillTagIds.length === 0) {
       return;
     }
-
-    const totalBudgetPercent = roleRequirements.reduce(
-      (sum, item) => sum + item.budgetPercent,
-      0
-    );
-    if (totalBudgetPercent !== 100) {
-      throw new BadRequestException("Position budget percentages must equal 100");
-    }
-
-    const totalXpPercent = roleRequirements.reduce(
-      (sum, item) => sum + item.xpPercent,
-      0
-    );
-    if (totalXpPercent !== 100) {
-      throw new BadRequestException("Position XP percentages must equal 100");
-    }
-
-    if (roleRequirements.some((item) => item.headcount < 1)) {
-      throw new BadRequestException("Position headcount must be at least 1");
-    }
-
-    const roleTagIds = roleRequirements.map((item) => item.roleTagId);
-    const uniqueRoleTagIds = [...new Set(roleTagIds)];
-    if (uniqueRoleTagIds.length !== roleTagIds.length) {
-      throw new BadRequestException("Each position can only be added once");
-    }
-
+    const uniqueSkillTagIds = [...new Set(skillTagIds)];
     const tags = await this.prisma.profileTag.findMany({
       where: {
-        id: { in: uniqueRoleTagIds },
-        type: "ROLE"
+        id: { in: uniqueSkillTagIds },
+        type: "SKILL"
       },
       select: { id: true }
     });
-    if (tags.length !== uniqueRoleTagIds.length) {
-      throw new BadRequestException("Task positions must use position profile tags");
-    }
-
-    const skillTagIds = [
-      ...new Set(roleRequirements.flatMap((item) => item.skillTagIds ?? []))
-    ];
-    if (skillTagIds.length > 0) {
-      const skillTags = await this.prisma.profileTag.findMany({
-        where: {
-          id: { in: skillTagIds },
-          type: "SKILL"
-        },
-        select: { id: true }
-      });
-      if (skillTags.length !== skillTagIds.length) {
-        throw new BadRequestException("Skill requirements must use skill profile tags");
-      }
+    if (tags.length !== uniqueSkillTagIds.length) {
+      throw new BadRequestException("Task skill requirements must use skill tags");
     }
   }
 
-  private scoreApplication(
-    requiredSkillTagIds: string[],
-    applicant: {
-      profileTags: Array<{ tagId: string }>;
-      assignedTasks: Array<{ status: TaskStatus }>;
+  private async calculateSkillMatchScore(userId: string, requiredSkillTagIds: string[]) {
+    if (requiredSkillTagIds.length === 0) {
+      return null;
     }
-  ) {
-    const applicantSkillIds = new Set(applicant.profileTags.map((item) => item.tagId));
-    const matchedSkillCount = requiredSkillTagIds.filter((id) =>
-      applicantSkillIds.has(id)
-    ).length;
-    const skillMatchScore =
-      requiredSkillTagIds.length === 0
-        ? 100
-        : Math.round((matchedSkillCount / requiredSkillTagIds.length) * 100);
-
-    const activeTaskCount = applicant.assignedTasks.filter((task) =>
-      task.status === TaskStatus.IN_PROGRESS || task.status === TaskStatus.REVIEW
-    ).length;
-    const workloadScore = Math.max(0, 100 - activeTaskCount * 25);
-
-    const assignedTaskCount = applicant.assignedTasks.length;
-    const completedTaskCount = applicant.assignedTasks.filter(
-      (task) => task.status === TaskStatus.DONE
-    ).length;
-    const completionRateScore =
-      assignedTaskCount === 0
-        ? 100
-        : Math.round((completedTaskCount / assignedTaskCount) * 100);
-
-    const finalScore = Math.round(
-      (skillMatchScore * 0.5 + workloadScore * 0.3 + completionRateScore * 0.2) *
-        100
-    ) / 100;
-
-    return {
-      skillMatchScore,
-      workloadScore,
-      completionRateScore,
-      finalScore
-    };
+    const userTags = await this.prisma.userProfileTag.findMany({
+      where: {
+        userId,
+        tag: { type: "SKILL" }
+      },
+      select: { tagId: true }
+    });
+    const userSkillIds = new Set(userTags.map((item) => item.tagId));
+    const matched = requiredSkillTagIds.filter((id) => userSkillIds.has(id)).length;
+    return Math.round((matched / requiredSkillTagIds.length) * 100);
   }
 
-  private calculateShare(total: number, percent: number, headcount: number) {
+  private calculateRequirementShare(total: number, percent: number, headcount: number) {
+    if (total <= 0 || percent <= 0 || headcount <= 0) {
+      return 0;
+    }
     return Math.round((total * percent) / 100 / headcount);
+  }
+
+  private async isTaskFullyAssigned(tx: Prisma.TransactionClient, taskId: string) {
+    const requirements = await tx.taskRequirement.findMany({
+      where: { taskId },
+      select: { id: true, headcount: true }
+    });
+    if (requirements.length === 0) {
+      return true;
+    }
+    const acceptedCounts = await Promise.all(
+      requirements.map(async (requirement) => ({
+        requirementId: requirement.id,
+        required: requirement.headcount,
+        accepted: await tx.taskApplication.count({
+          where: {
+            taskId,
+            requirementId: requirement.id,
+            status: ApplicationStatus.ACCEPTED
+          }
+        })
+      }))
+    );
+    return acceptedCounts.every((item) => item.accepted >= item.required);
   }
 
   private defaultXpReward(difficulty?: "EASY" | "MEDIUM" | "HARD") {

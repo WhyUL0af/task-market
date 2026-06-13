@@ -1,0 +1,2 @@
+ALTER TABLE "User" DROP COLUMN IF EXISTS "skillTags";
+ALTER TABLE "User" DROP COLUMN IF EXISTS "preferredRoles";

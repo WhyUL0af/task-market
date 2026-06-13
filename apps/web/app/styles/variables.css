@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --muted: #475569;
+  --subtle: #64748b;
+  --line: rgba(15, 23, 42, 0.06);
+  --line-strong: rgba(15, 23, 42, 0.12);
+  --panel: rgba(255, 255, 255, 0.7);
+  --panel-soft: rgba(255, 255, 255, 0.45);
+  
+  --primary: #0284c7;
+  --primary-dark: #0369a1;
+  --primary-glow: rgba(2, 132, 199, 0.08);
+  
+  --accent: #d97706;
+  --accent-soft: rgba(217, 119, 6, 0.08);
+  --accent-glow: rgba(217, 119, 6, 0.12);
+  
+  --mint: #047857;
+  --mint-soft: rgba(16, 185, 129, 0.08);
+  
+  --violet: #0d9488;
+  --violet-soft: rgba(13, 148, 136, 0.08);
+  
+  --danger: #f43f5e;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --ink: #ffffff;
+  
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--foreground);
+  background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(2, 132, 199, 0.07) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(13, 148, 136, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+  background-attachment: fixed;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+h1, h2, h3, p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #0f172a 40%, var(--muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+h3 {
+  margin-bottom: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.main {
+  width: min(1200px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0 96px;
+  flex: 1;
+}
+
+.auth-main {
+  display: grid;
+  min-height: calc(100vh - 140px);
+  align-items: center;
+}

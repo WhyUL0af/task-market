@@ -14,7 +14,6 @@ export type User = {
   name: string;
   bio?: string | null;
   skillTags?: ProfileTag[];
-  preferredRoles?: ProfileTag[];
   notificationSettings?: NotificationSettings;
   role: Role;
   xp?: number;
@@ -28,7 +27,7 @@ export type NotificationSettings = {
   reviewResults: boolean;
 };
 
-export type ProfileTagType = "SKILL" | "ROLE";
+export type ProfileTagType = "SKILL";
 
 export type ProfileTag = {
   id: string;
@@ -61,6 +60,7 @@ export type Badge = {
 export type UserBadge = {
   id: string;
   earnedAt: string;
+  active: boolean;
   badge: Badge;
 };
 
@@ -82,7 +82,6 @@ export type ExpTransaction = {
   id: string;
   amount: number;
   reason: string;
-  roleName?: string | null;
   createdAt: string;
 };
 
@@ -94,8 +93,7 @@ export type GamificationProfile = {
   level: number;
   nextLevelExp: number;
   badges: UserBadge[];
-  titles: UserTitle[];
-  activeTitle?: Title | null;
+  activeBadge?: Badge | null;
   recentExp: ExpTransaction[];
 };
 
@@ -116,7 +114,8 @@ export type TaskApplication = {
   message?: string | null;
   status: "PENDING" | "APPROVED" | "ACCEPTED" | "WAITLIST" | "REJECTED";
   applicant: User;
-  roleRequirement?: TaskRoleRequirement | null;
+  requirement?: TaskRequirement | null;
+  requirementId?: string | null;
   skillMatchScore?: number | null;
   workloadScore?: number | null;
   completionRateScore?: number | null;
@@ -129,6 +128,7 @@ export type TaskSubmission = {
   id: string;
   content: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
+  createdAt?: string;
   employee: User;
 };
 
@@ -144,25 +144,30 @@ export type Task = {
   title: string;
   description: string;
   reward?: number | null;
+  dueAt?: string | null;
   difficulty: "EASY" | "MEDIUM" | "HARD";
   xpReward: number;
   status: TaskStatus;
   creator: User;
   assignee?: User | null;
   assigneeId?: string | null;
-  roleRequirements: TaskRoleRequirement[];
+  requirements: TaskRequirement[];
   applications: TaskApplication[];
   submissions: TaskSubmission[];
   comments: Comment[];
 };
 
-export type TaskRoleRequirement = {
+export type TaskRequirement = {
   id: string;
+  name?: string | null;
   headcount: number;
   budgetPercent: number;
   xpPercent: number;
-  roleTag: ProfileTag;
-  skillTags: Array<{ id: string; skillTag: ProfileTag }>;
-  assignee?: User | null;
-  assigneeId?: string | null;
+  skills: TaskRequirementSkill[];
+};
+
+export type TaskRequirementSkill = {
+  id: string;
+  skillTag: ProfileTag;
+  skillTagId?: string;
 };

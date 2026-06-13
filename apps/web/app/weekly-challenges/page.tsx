@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
 import type { WeeklyChallenge } from "@/lib/types";
 
@@ -11,39 +11,91 @@ export default function WeeklyChallengesPage() {
   useEffect(() => {
     api<WeeklyChallenge[]>("/gamification/challenges/weekly")
       .then(setChallenges)
-      .catch((err) => setError(err instanceof Error ? err.message : "讀取每週挑戰失敗"));
+      .catch((err) => setError(err instanceof Error ? err.message : "讀取挑戰失敗"));
   }, []);
+
+  const stats = useMemo(() => {
+    const total = challenges.length;
+    const completed = challenges.filter((c) => c.completed).length;
+    return {
+      total,
+      completed,
+      reward: challenges.reduce((sum, c) => sum + (c.completed ? c.expReward : 0), 0)
+    };
+  }, [challenges]);
 
   return (
     <section className="stack">
       <div className="page-head">
         <div>
-          <p className="page-kicker">Weekly</p>
+          <span className="page-kicker">Weekly Challenges</span>
           <h1>每週挑戰</h1>
-          <p className="muted">完成挑戰可獲得額外 EXP 與成就徽章。</p>
+        </div>
+        <div className="leaderboard-summary">
+          <div>
+            <span>完成挑戰</span>
+            <strong>{stats.completed} / {stats.total}</strong>
+          </div>
+          <div>
+            <span>獲得獎勵</span>
+            <strong style={{ color: "var(--primary)" }}>+{stats.reward} EXP</strong>
+          </div>
         </div>
       </div>
 
       {error ? <p className="error">{error}</p> : null}
 
-      <div className="grid">
+      <div className="grid" style={{ gridTemplateColumns: "1fr" }}>
         {challenges.map((challenge) => {
-          const percent = Math.min(100, (challenge.progress / challenge.target) * 100);
+          const percent =
+            challenge.target > 0
+              ? Math.min(100, (challenge.progress / challenge.target) * 100)
+              : 0;
           return (
-            <div className={challenge.completed ? "card highlight-card" : "card"} key={challenge.id}>
-              <div className="row">
-                <strong>{challenge.title}</strong>
-                <span className="xp-badge">+{challenge.expReward} EXP</span>
+            <div
+              className="card"
+              key={challenge.id}
+              style={{
+                display: "grid",
+                gap: "18px",
+                borderColor: challenge.completed ? "rgba(99, 102, 241, 0.3)" : "var(--line)",
+                background: challenge.completed
+                  ? "linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, var(--panel) 100%)"
+                  : "var(--panel)"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+                <div>
+                  <h2 style={{ margin: "0 0 4px", fontSize: "18px" }}>{challenge.title}</h2>
+                  <p className="muted" style={{ margin: 0, fontSize: "14px" }}>
+                    {challenge.description || "完成該挑戰以獲取冒險者經驗值"}
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <span className="xp-badge">+{challenge.expReward} EXP</span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: "99px",
+                      background: challenge.completed ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                      color: challenge.completed ? "#34d399" : "var(--muted)",
+                      border: challenge.completed ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid var(--line)"
+                    }}
+                  >
+                    {challenge.completed ? "已完成" : "進行中"}
+                  </span>
+                </div>
               </div>
-              <p className="muted">{challenge.description}</p>
-              <div className="progress">
-                <span style={{ width: `${percent}%` }} />
-              </div>
-              <div className="row">
-                <span className="muted">
-                  {challenge.progress} / {challenge.target}
-                </span>
-                <span className="badge">{challenge.completed ? "已完成" : "進行中"}</span>
+
+              <div style={{ display: "grid", gap: "8px" }}>
+                <div className="progress" style={{ height: "10px" }}>
+                  <span style={{ width: `${percent}%` }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }} className="muted">
+                  <span>進度: {challenge.progress} / {challenge.target}</span>
+                </div>
               </div>
             </div>
           );

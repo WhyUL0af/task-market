@@ -1,0 +1,91 @@
+/* Login Wrap & Panel */
+.login-wrap {
+  width: min(440px, 100%);
+  margin: 0 auto;
+}
+
+.login-panel {
+  padding: 40px;
+}
+
+/* Toggle Grid */
+.toggle-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+  transition: var(--transition);
+}
+
+.toggle-row:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.toggle-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Stat Grid */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+  padding: 14px;
+  text-align: center;
+}
+
+.stat span {
+  display: block;
+  font-size: 11px;
+  color: var(--subtle);
+  text-transform: uppercase;
+}
+
+.stat strong {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  margin-top: 4px;
+  color: var(--foreground);
+}
+
+/* Profile Tag Management & Records */
+.list {
+  display: grid;
+  gap: 12px;
+}
+
+.record {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-soft);
+  padding: 16px;
+}
+
+.record .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record .row strong {
+  color: var(--foreground);
+}

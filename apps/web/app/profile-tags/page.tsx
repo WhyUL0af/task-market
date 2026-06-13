@@ -3,17 +3,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
-import type { ProfileTag, ProfileTagType, User } from "@/lib/types";
+import type { ProfileTag, User } from "@/lib/types";
 
 type TagForm = {
   name: string;
-  type: ProfileTagType;
 };
 
-const emptyForm: TagForm = {
-  name: "",
-  type: "SKILL"
-};
+const emptyForm: TagForm = { name: "" };
 
 export default function ProfileTagsPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -45,11 +41,11 @@ export default function ProfileTagsPage() {
     try {
       const tag = await api<ProfileTag>("/users/profile-tags", {
         method: "POST",
-        body: JSON.stringify(form)
+        body: JSON.stringify({ name: form.name, type: "SKILL" })
       });
       setTags((items) => [...items, tag].sort(sortTags));
       setForm(emptyForm);
-      setNotice("標籤已新增");
+      setNotice("標籤新增成功。");
     } catch (err) {
       setError(err instanceof Error ? err.message : "新增標籤失敗");
     }
@@ -57,7 +53,7 @@ export default function ProfileTagsPage() {
 
   function startEdit(tag: ProfileTag) {
     setEditingId(tag.id);
-    setEditForm({ name: tag.name, type: tag.type });
+    setEditForm({ name: tag.name });
     setError("");
     setNotice("");
   }
@@ -72,19 +68,19 @@ export default function ProfileTagsPage() {
     try {
       const tag = await api<ProfileTag>(`/users/profile-tags/${editingId}`, {
         method: "PATCH",
-        body: JSON.stringify(editForm)
+        body: JSON.stringify({ name: editForm.name, type: "SKILL" })
       });
       setTags((items) => items.map((item) => (item.id === tag.id ? tag : item)).sort(sortTags));
       setEditingId(null);
       setEditForm(emptyForm);
-      setNotice("標籤已更新");
+      setNotice("標籤更新成功。");
     } catch (err) {
       setError(err instanceof Error ? err.message : "更新標籤失敗");
     }
   }
 
   async function deleteTag(tag: ProfileTag) {
-    if (!window.confirm(`確定刪除「${tag.name}」嗎？`)) {
+    if (!window.confirm(`確定要刪除技能標籤 ${tag.name} 嗎？`)) {
       return;
     }
     setError("");
@@ -92,7 +88,7 @@ export default function ProfileTagsPage() {
     try {
       await api(`/users/profile-tags/${tag.id}`, { method: "DELETE" });
       setTags((items) => items.filter((item) => item.id !== tag.id));
-      setNotice("標籤已刪除");
+      setNotice("標籤已成功刪除。");
     } catch (err) {
       setError(err instanceof Error ? err.message : "刪除標籤失敗");
     }
@@ -100,140 +96,104 @@ export default function ProfileTagsPage() {
 
   if (currentUser?.role !== "ADMIN") {
     return (
-      <section className="panel">
-        <h1>標籤管理</h1>
-        <p className="error">只有 Admin 可以管理標籤。</p>
+      <section className="panel" style={{ padding: "40px", textAlign: "center" }}>
+        <h1 style={{ fontSize: "28px" }}>標籤管理</h1>
+        <p className="error" style={{ display: "inline-block", marginTop: "16px" }}>
+          權限不足：只有系統管理員 (Admin) 可以訪問此頁面。
+        </p>
       </section>
     );
   }
-
-  const skillTags = tags.filter((tag) => tag.type === "SKILL");
-  const roleTags = tags.filter((tag) => tag.type === "ROLE");
 
   return (
     <section className="stack">
       <div className="page-head">
         <div>
-          <p className="page-kicker">Admin</p>
+          <span className="page-kicker">Admin Only</span>
           <h1>標籤管理</h1>
-          <p className="muted">統一管理技能標籤與偏好職位，讓資料保持乾淨。</p>
         </div>
       </div>
 
-      {error ? <p className="error">{error}</p> : null}
-      {notice ? <p className="notice">{notice}</p> : null}
+      <div className="split" style={{ gridTemplateColumns: "1fr 400px" }}>
+        {/* Left: Tag List */}
+        <section className="panel stack" style={{ gap: "20px" }}>
+          <h2>現有技能標籤 ({tags.length})</h2>
+          {error ? <p className="error">{error}</p> : null}
+          {notice ? <p className="notice">{notice}</p> : null}
 
-      <div className="split">
-        <form className="panel form full" onSubmit={createTag}>
-          <h2>新增標籤</h2>
-          <TagFields form={form} setForm={setForm} />
-          <button className="button" type="submit">
-            新增標籤
-          </button>
-        </form>
+          {tags.length === 0 ? (
+            <div className="empty">尚未建立技能標籤。</div>
+          ) : (
+            <div className="list" style={{ gap: "12px" }}>
+              {tags.map((tag) => (
+                <div
+                  className="record"
+                  key={tag.id}
+                  style={{
+                    padding: "12px 20px",
+                    background: "rgba(255, 255, 255, 0.015)",
+                    border: "1px solid var(--line)"
+                  }}
+                >
+                  {editingId === tag.id ? (
+                    <form className="form full" onSubmit={updateTag} style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                      <div style={{ flex: 1 }}>
+                        <TagFields form={editForm} setForm={setEditForm} />
+                      </div>
+                      <div className="actions" style={{ marginBottom: "2px" }}>
+                        <button className="button" type="submit" style={{ padding: "10px 18px" }}>
+                          儲存
+                        </button>
+                        <button
+                          className="button secondary"
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          style={{ padding: "10px 18px" }}
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <strong style={{ color: "#000000", fontSize: "15px" }}>{tag.name}</strong>
+                      <div className="actions">
+                        <button
+                          className="button secondary"
+                          type="button"
+                          onClick={() => startEdit(tag)}
+                          style={{ padding: "6px 14px", fontSize: "13px" }}
+                        >
+                          編輯
+                        </button>
+                        <button
+                          className="button danger"
+                          type="button"
+                          onClick={() => deleteTag(tag)}
+                          style={{ padding: "6px 14px", fontSize: "13px" }}
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
-        <aside className="panel">
-          <h2>使用方式</h2>
-          <p className="muted">
-            Employee 在個人設定只能選擇這裡建立的標籤，不能自行新增同義詞。
-          </p>
-          <p className="muted">已被使用的標籤不能刪除，但可以改名。</p>
+        {/* Right: Add Tag Form */}
+        <aside>
+          <form className="panel form full" onSubmit={createTag}>
+            <h2>新增技能標籤</h2>
+            <TagFields form={form} setForm={setForm} />
+            <button className="button" type="submit" style={{ width: "100%", marginTop: "12px" }}>
+              新增技能
+            </button>
+          </form>
         </aside>
       </div>
-
-      <TagSection
-        editingId={editingId}
-        editForm={editForm}
-        emptyText="尚未建立技能標籤"
-        onCancel={() => setEditingId(null)}
-        onDelete={deleteTag}
-        onEdit={startEdit}
-        onSubmit={updateTag}
-        setEditForm={setEditForm}
-        tags={skillTags}
-        title="技能標籤"
-      />
-
-      <TagSection
-        editingId={editingId}
-        editForm={editForm}
-        emptyText="尚未建立偏好職位"
-        onCancel={() => setEditingId(null)}
-        onDelete={deleteTag}
-        onEdit={startEdit}
-        onSubmit={updateTag}
-        setEditForm={setEditForm}
-        tags={roleTags}
-        title="偏好職位"
-      />
-    </section>
-  );
-}
-
-function TagSection({
-  title,
-  tags,
-  emptyText,
-  editingId,
-  editForm,
-  setEditForm,
-  onEdit,
-  onDelete,
-  onSubmit,
-  onCancel
-}: {
-  title: string;
-  tags: ProfileTag[];
-  emptyText: string;
-  editingId: string | null;
-  editForm: TagForm;
-  setEditForm: (form: TagForm) => void;
-  onEdit: (tag: ProfileTag) => void;
-  onDelete: (tag: ProfileTag) => void;
-  onSubmit: (event: FormEvent) => void;
-  onCancel: () => void;
-}) {
-  return (
-    <section className="panel stack">
-      <h2>{title}</h2>
-      {tags.length === 0 ? (
-        <div className="empty">{emptyText}</div>
-      ) : (
-        <div className="list">
-          {tags.map((tag) => (
-            <div className="record" key={tag.id}>
-              {editingId === tag.id ? (
-                <form className="form full" onSubmit={onSubmit}>
-                  <TagFields form={editForm} setForm={setEditForm} />
-                  <div className="actions">
-                    <button className="button" type="submit">
-                      儲存
-                    </button>
-                    <button className="button secondary" type="button" onClick={onCancel}>
-                      取消
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="row">
-                  <div>
-                    <strong>{tag.name}</strong>
-                    <p className="muted">{tag.type === "SKILL" ? "技能標籤" : "偏好職位"}</p>
-                  </div>
-                  <div className="actions">
-                    <button className="button secondary" type="button" onClick={() => onEdit(tag)}>
-                      編輯
-                    </button>
-                    <button className="button danger" type="button" onClick={() => onDelete(tag)}>
-                      刪除
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
     </section>
   );
 }
@@ -246,31 +206,19 @@ function TagFields({
   setForm: (form: TagForm) => void;
 }) {
   return (
-    <>
-      <label className="field">
-        <span className="label">名稱</span>
-        <input
-          className="input"
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-          required
-        />
-      </label>
-      <label className="field">
-        <span className="label">類型</span>
-        <select
-          className="select"
-          value={form.type}
-          onChange={(event) => setForm({ ...form, type: event.target.value as ProfileTagType })}
-        >
-          <option value="SKILL">技能標籤</option>
-          <option value="ROLE">偏好職位</option>
-        </select>
-      </label>
-    </>
+    <label className="field">
+      <span className="label">標籤名稱</span>
+      <input
+        className="input"
+        value={form.name}
+        onChange={(event) => setForm({ ...form, name: event.target.value })}
+        required
+        placeholder="例如: React / Python"
+      />
+    </label>
   );
 }
 
 function sortTags(a: ProfileTag, b: ProfileTag) {
-  return a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
+  return a.name.localeCompare(b.name);
 }

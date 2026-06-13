@@ -3,12 +3,12 @@ import { ApplicationStatus, Prisma, TaskStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 const LEVEL_THRESHOLDS = [0, 300, 700, 1200, 1800];
+const MAX_LEVEL = 8;
 
 type CompletionAward = {
   userId: string;
   name: string;
   exp: number;
-  roleName?: string;
 };
 
 @Injectable()
@@ -27,7 +27,7 @@ export class GamificationService {
             step += 100;
             level += 1;
           }
-          return level;
+          return Math.min(level, MAX_LEVEL);
         }
         return index + 1;
       }
@@ -36,6 +36,15 @@ export class GamificationService {
   }
 
   nextLevelExp(level: number) {
+    if (level >= MAX_LEVEL) {
+      let threshold = LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+      let step = 700;
+      for (let current = LEVEL_THRESHOLDS.length; current < MAX_LEVEL; current += 1) {
+        threshold += step;
+        step += 100;
+      }
+      return threshold;
+    }
     if (level < LEVEL_THRESHOLDS.length) {
       return LEVEL_THRESHOLDS[level];
     }
@@ -53,7 +62,6 @@ export class GamificationService {
       where: { id: employeeId },
       include: {
         badges: { include: { badge: true }, orderBy: { earnedAt: "desc" } },
-        titles: { include: { title: true }, orderBy: { earnedAt: "desc" } },
         expTransactions: { orderBy: { createdAt: "desc" }, take: 10 }
       }
     });
@@ -69,10 +77,46 @@ export class GamificationService {
       level: user.level,
       nextLevelExp: this.nextLevelExp(user.level),
       badges: user.badges,
-      titles: user.titles,
-      activeTitle: user.titles.find((item) => item.active)?.title ?? null,
+      activeBadge: user.badges.find((item) => item.active)?.badge ?? null,
       recentExp: user.expTransactions
     };
+  }
+
+  async equipBadge(userId: string, badgeId: string | null) {
+    if (badgeId) {
+      const userBadge = await this.prisma.userBadge.findUnique({
+        where: {
+          userId_badgeId: {
+            userId,
+            badgeId
+          }
+        }
+      });
+      if (!userBadge) {
+        throw new BadRequestException("你尚未解鎖或不擁有此成就");
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userBadge.updateMany({
+        where: { userId },
+        data: { active: false }
+      });
+
+      if (badgeId) {
+        await tx.userBadge.update({
+          where: {
+            userId_badgeId: {
+              userId,
+              badgeId
+            }
+          },
+          data: { active: true }
+        });
+      }
+    });
+
+    return this.profile(userId);
   }
 
   async badges() {
@@ -148,14 +192,10 @@ export class GamificationService {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        roleRequirements: {
-          include: {
-            roleTag: true,
-            applications: {
-              where: { status: ApplicationStatus.ACCEPTED },
-              include: { applicant: true }
-            }
-          }
+        requirements: true,
+        applications: {
+          where: { status: ApplicationStatus.ACCEPTED },
+          include: { applicant: true, requirement: true }
         }
       }
     });
@@ -183,8 +223,7 @@ export class GamificationService {
       for (const award of awards) {
         await this.applyExp(tx, award.userId, award.exp, {
           taskId,
-          reason: `Completed task: ${task.title}`,
-          roleName: award.roleName
+          reason: `Completed task: ${task.title}`
         });
       }
     });
@@ -241,28 +280,6 @@ export class GamificationService {
     });
   }
 
-  async roleLeaderboard(roleName: string) {
-    const rows = await this.prisma.taskApplication.groupBy({
-      by: ["applicantId"],
-      where: {
-        status: ApplicationStatus.ACCEPTED,
-        completedAt: { not: null },
-        roleRequirement: { roleTag: { name: roleName } }
-      },
-      _count: { id: true },
-      orderBy: { _count: { id: "desc" } },
-      take: 20
-    });
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: rows.map((row) => row.applicantId) } },
-      select: { id: true, name: true, email: true, level: true, xp: true }
-    });
-    return rows.map((row) => ({
-      user: users.find((user) => user.id === row.applicantId),
-      score: row._count.id
-    }));
-  }
-
   async onTimeLeaderboard() {
     const users = await this.prisma.user.findMany({
       where: { role: "EMPLOYEE" },
@@ -270,6 +287,8 @@ export class GamificationService {
         id: true,
         name: true,
         email: true,
+        level: true,
+        xp: true,
         applications: {
           where: {
             status: ApplicationStatus.ACCEPTED,
@@ -286,6 +305,8 @@ export class GamificationService {
           id: user.id,
           name: user.name,
           email: user.email,
+          level: user.level,
+          xp: user.xp,
           score: user.applications.length === 0 ? 0 : Math.round((onTime / user.applications.length) * 100),
           completed: user.applications.length
         };
@@ -301,8 +322,7 @@ export class GamificationService {
         applications: {
           some: {
             status: ApplicationStatus.ACCEPTED,
-            completedAt: { not: null },
-            task: { roleRequirements: { some: { headcount: { gt: 1 } } } }
+            completedAt: { not: null }
           }
         }
       },
@@ -315,8 +335,7 @@ export class GamificationService {
             applications: {
               where: {
                 status: ApplicationStatus.ACCEPTED,
-                completedAt: { not: null },
-                task: { roleRequirements: { some: { headcount: { gt: 1 } } } }
+                completedAt: { not: null }
               }
             }
           }
@@ -330,41 +349,47 @@ export class GamificationService {
     id: string;
     title: string;
     xpReward: number;
-    roleRequirements: Array<{
-      xpPercent: number;
-      headcount: number;
-      roleTag: { name: string };
-      applications: Array<{ applicantId: string; applicant: { name: string } }>;
+    requirements: Array<{ id: string; xpPercent: number }>;
+    applications: Array<{
+      applicantId: string;
+      requirementId: string | null;
+      applicant: { name: string };
     }>;
   }) {
-    if (task.roleRequirements.length === 0) {
+    if (task.applications.length === 0) {
       return [];
     }
-    const awards: CompletionAward[] = [];
-    for (const role of task.roleRequirements) {
-      const accepted = role.applications;
-      if (accepted.length === 0) {
-        continue;
-      }
-      const roleExp = Math.round((task.xpReward * role.xpPercent) / 100);
-      const expPerPerson = Math.round(roleExp / accepted.length);
-      for (const application of accepted) {
-        awards.push({
+    if (task.requirements.length > 0) {
+      return task.requirements.flatMap((requirement) => {
+        const members = task.applications.filter(
+          (application) => application.requirementId === requirement.id
+        );
+        if (members.length === 0) {
+          return [];
+        }
+        const expPerPerson = Math.round(
+          ((task.xpReward * requirement.xpPercent) / 100) / members.length
+        );
+        return members.map((application) => ({
           userId: application.applicantId,
           name: application.applicant.name,
-          exp: expPerPerson,
-          roleName: role.roleTag.name
-        });
-      }
+          exp: expPerPerson
+        }));
+      });
     }
-    return awards;
+    const expPerPerson = Math.round(task.xpReward / task.applications.length);
+    return task.applications.map((application) => ({
+      userId: application.applicantId,
+      name: application.applicant.name,
+      exp: expPerPerson
+    }));
   }
 
   private async applyExp(
     tx: Prisma.TransactionClient,
     userId: string,
     amount: number,
-    data: { taskId?: string; reason: string; roleName?: string }
+    data: { taskId?: string; reason: string }
   ) {
     if (amount <= 0) {
       return;
@@ -374,8 +399,7 @@ export class GamificationService {
         userId,
         taskId: data.taskId,
         amount,
-        reason: data.reason,
-        roleName: data.roleName
+        reason: data.reason
       }
     });
     const user = await tx.user.findUnique({
@@ -403,52 +427,18 @@ export class GamificationService {
           applicantId: userId,
           status: ApplicationStatus.ACCEPTED,
           completedAt: { not: null }
-        },
-        include: {
-          roleRequirement: { include: { roleTag: true } }
         }
       });
       const completed = completedApplications.length;
       const onTime = completedApplications.filter((application) => application.onTime).length;
-      const teamTasks = await this.prisma.taskApplication.count({
-        where: {
-          applicantId: userId,
-          status: ApplicationStatus.ACCEPTED,
-          completedAt: { not: null },
-          task: { roleRequirements: { some: { headcount: { gt: 1 } } } }
-        }
-      });
-      const roleCounts = completedApplications.reduce<Record<string, number>>((counts, application) => {
-        const roleName = application.roleRequirement?.roleTag.name;
-        if (!roleName) {
-          return counts;
-        }
-        counts[roleName] = (counts[roleName] ?? 0) + 1;
-        return counts;
-      }, {});
-      const hasRoleExpertRole = Object.values(roleCounts).some((count) => count >= 10);
 
       const badgeCodes = [
         completed >= 1 ? "FIRST_TASK" : null,
-        onTime >= 10 ? "ON_TIME_MASTER" : null,
-        teamTasks >= 5 ? "TEAM_PLAYER" : null,
-        hasRoleExpertRole ? "ROLE_EXPERT" : null
+        onTime >= 10 ? "ON_TIME_MASTER" : null
       ].filter((code): code is string => !!code);
 
       for (const code of badgeCodes) {
         await this.awardBadge(userId, code);
-      }
-
-      const titleCodes = [
-        completed >= 1 ? "NEW_ADVENTURER" : null,
-        onTime >= 10 ? "ON_TIME_PRO" : null,
-        this.hasRoleCount(roleCounts, ["frontend", "前端"], 10) ? "FRONTEND_EXPERT" : null,
-        this.hasRoleCount(roleCounts, ["backend", "後端"], 10) ? "BACKEND_EXPERT" : null,
-        teamTasks >= 5 ? "TEAM_CORE" : null,
-        completed >= 20 ? "TASK_MASTER" : null
-      ].filter((code): code is string => !!code);
-      for (const code of titleCodes) {
-        await this.awardTitle(userId, code);
       }
     }
   }
@@ -458,36 +448,26 @@ export class GamificationService {
     if (!badge) {
       return;
     }
-    await this.prisma.userBadge.upsert({
-      where: { userId_badgeId: { userId, badgeId: badge.id } },
-      update: {},
-      create: { userId, badgeId: badge.id }
-    });
-  }
-
-  private async awardTitle(userId: string, code: string) {
-    const title = await this.prisma.title.findUnique({ where: { code } });
-    if (!title) {
-      return;
-    }
-    const activeTitle = await this.prisma.userTitle.findFirst({
+    const activeBadge = await this.prisma.userBadge.findFirst({
       where: { userId, active: true },
       select: { id: true }
     });
-    await this.prisma.userTitle.upsert({
-      where: { userId_titleId: { userId, titleId: title.id } },
+    await this.prisma.userBadge.upsert({
+      where: { userId_badgeId: { userId, badgeId: badge.id } },
       update: {},
-      create: { userId, titleId: title.id, active: !activeTitle }
+      create: { userId, badgeId: badge.id, active: !activeBadge }
     });
   }
 
   private async ensureDefaults() {
     const badges = [
-      ["FIRST_TASK", "First Task", "首次完成任務", "1st"],
-      ["ON_TIME_MASTER", "On Time Master", "準時完成 10 次任務", "10x"],
-      ["TEAM_PLAYER", "Team Player", "參與 5 次多人任務", "Team"],
-      ["ROLE_EXPERT", "Role Expert", "同一角色完成 10 次任務", "Role"],
-      ["WEEKLY_CHALLENGER", "Weekly Challenger", "完成每週挑戰", "Week"]
+      ["FIRST_TASK", "首次完成", "首次完成任務", "1st"],
+      ["ON_TIME_MASTER", "準時大師", "準時完成 10 次任務", "10x"],
+      ["TEAM_PLAYER", "團隊合作者", "參與 5 次多人任務", "Team"],
+      ["ROLE_EXPERT", "領域專家", "同一角色完成 10 次任務", "Role"],
+      ["WEEKLY_CHALLENGER", "每週挑戰者", "完成每週挑戰", "Week"],
+      ["RELIABLE_WORKER", "可靠夥伴", "完成 5 個任務。", "5x"],
+      ["HIGH_VALUE", "卓越價值", "完成高 XP 任務。", "HV"]
     ];
     for (const [code, name, description, icon] of badges) {
       await this.prisma.badge.upsert({
@@ -497,26 +477,9 @@ export class GamificationService {
       });
     }
 
-    const titles = [
-      ["NEW_ADVENTURER", "新人冒險者", "完成第一個任務"],
-      ["ON_TIME_PRO", "準時達人", "準時完成任務的可靠夥伴"],
-      ["FRONTEND_EXPERT", "Frontend 專家", "前端角色完成度達標"],
-      ["BACKEND_EXPERT", "Backend 專家", "後端角色完成度達標"],
-      ["TEAM_CORE", "團隊核心", "多人協作任務表現穩定"],
-      ["TASK_MASTER", "任務大師", "累積完成大量任務"]
-    ];
-    for (const [code, name, description] of titles) {
-      await this.prisma.title.upsert({
-        where: { code },
-        update: { name, description },
-        create: { code, name, description }
-      });
-    }
-
     const challenges = [
       ["WEEKLY_COMPLETE_2", "本週完成 2 個任務", "完成任務數達到 2", "completed_tasks", 2, 100],
-      ["WEEKLY_ON_TIME_1", "本週準時完成 1 個任務", "準時完成任務數達到 1", "on_time_tasks", 1, 50],
-      ["WEEKLY_TEAM_1", "本週參與 1 個多人任務", "多人協作任務完成數達到 1", "team_tasks", 1, 80]
+      ["WEEKLY_ON_TIME_1", "本週準時完成 1 個任務", "準時完成任務數達到 1", "on_time_tasks", 1, 50]
     ];
     for (const [code, title, description, metric, target, expReward] of challenges) {
       await this.prisma.weeklyChallenge.upsert({
@@ -564,21 +527,6 @@ export class GamificationService {
         }
       });
     }
-    if (metric === "team_tasks") {
-      return this.prisma.taskApplication.count({
-        where: {
-          ...where,
-          task: { roleRequirements: { some: { headcount: { gt: 1 } } } }
-        }
-      });
-    }
     return this.prisma.taskApplication.count({ where });
-  }
-
-  private hasRoleCount(roleCounts: Record<string, number>, keywords: string[], target: number) {
-    return Object.entries(roleCounts).some(([roleName, count]) => {
-      const normalized = roleName.toLowerCase();
-      return count >= target && keywords.some((keyword) => normalized.includes(keyword.toLowerCase()));
-    });
   }
 }

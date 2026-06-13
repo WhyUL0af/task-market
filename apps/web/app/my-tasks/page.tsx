@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { TaskBrowser } from "@/components/task-browser";
 import { api } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import type { Task, User } from "@/lib/types";
@@ -37,40 +37,13 @@ export default function MyTasksPage() {
     <section className="stack">
       <div className="page-head">
         <div>
-          <p className="page-kicker">My work</p>
+          <span className="page-kicker">My Tasks</span>
           <h1>我的任務</h1>
-          <p className="muted">集中查看你建立、申請或被指派的任務。</p>
         </div>
       </div>
 
       {error ? <p className="error">{error}</p> : null}
-
-      {myTasks.length === 0 ? (
-        <div className="empty">目前沒有和你相關的任務。</div>
-      ) : (
-        <div className="grid">
-          {myTasks.map((task) => (
-            <Link className="card" href={`/tasks/${task.id}`} key={task.id}>
-              <div className="row">
-                <span className={`badge ${statusClass(task.status)}`}>{task.status}</span>
-                <span className="xp-badge">{task.xpReward} XP</span>
-              </div>
-              <div>
-                <h2>{task.title}</h2>
-                <p className="muted">{task.description}</p>
-              </div>
-              <div className="meta-row">
-                <span>難度 {task.difficulty}</span>
-                {task.assignee ? <span>負責人 {task.assignee.name}</span> : <span>尚未指派</span>}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      <TaskBrowser tasks={myTasks} emptyText="目前沒有任務。" />
     </section>
   );
-}
-
-function statusClass(status: string) {
-  return `status-${status.toLowerCase().replace("_", "-")}`;
 }

@@ -1,5 +1,6 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { IsOptional, IsString } from "class-validator";
 import {
   CurrentUser,
   type CurrentUser as CurrentUserType
@@ -8,10 +9,25 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { GamificationService } from "./gamification.service";
 
+export class EquipBadgeDto {
+  @IsString()
+  @IsOptional()
+  badgeId!: string | null;
+}
+
 @UseGuards(AuthGuard("jwt"), RolesGuard)
 @Controller("gamification")
 export class GamificationController {
   constructor(private readonly gamification: GamificationService) {}
+
+  @Post("equip-badge")
+  @Roles("ADMIN", "EMPLOYEE")
+  equipBadge(
+    @CurrentUser() user: CurrentUserType,
+    @Body() body: EquipBadgeDto
+  ) {
+    return this.gamification.equipBadge(user.id, body.badgeId);
+  }
 
   @Get("profile/:employeeId")
   @Roles("ADMIN", "EMPLOYEE")
