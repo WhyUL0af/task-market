@@ -144,15 +144,21 @@ export class UsersService {
       applicationCount,
       submissionCount
     ] = await Promise.all([
-      this.prisma.task.count({ where: { assigneeId: currentUser.id } }),
-      this.prisma.task.count({
-        where: { assigneeId: currentUser.id, status: "DONE" }
+      this.prisma.taskApplication.count({
+        where: { applicantId: currentUser.id, status: "ACCEPTED" }
       }),
-      this.prisma.task.count({
-        where: { assigneeId: currentUser.id, status: "IN_PROGRESS" }
+      this.prisma.taskApplication.count({
+        where: { applicantId: currentUser.id, status: "ACCEPTED", task: { status: "DONE" } }
       }),
-      this.prisma.task.count({
-        where: { assigneeId: currentUser.id, status: "REVIEW" }
+      this.prisma.taskApplication.count({
+        where: {
+          applicantId: currentUser.id,
+          status: "ACCEPTED",
+          task: { status: "IN_PROGRESS" }
+        }
+      }),
+      this.prisma.taskApplication.count({
+        where: { applicantId: currentUser.id, status: "ACCEPTED", task: { status: "REVIEW" } }
       }),
       this.prisma.taskApplication.count({
         where: { applicantId: currentUser.id }
@@ -286,7 +292,12 @@ export class UsersService {
         },
         _count: {
           select: {
-            assignedTasks: { where: { status: "DONE" } }
+            applications: {
+              where: {
+                status: "ACCEPTED",
+                task: { status: "DONE" }
+              }
+            }
           }
         }
       },
@@ -306,7 +317,6 @@ export class UsersService {
         _count: {
           select: {
             createdTasks: true,
-            assignedTasks: true,
             applications: true,
             submissions: true,
             comments: true

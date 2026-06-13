@@ -82,6 +82,18 @@
   border-radius: var(--radius-lg);
   padding: 32px;
   background: var(--panel);
+  backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: 
+    0 8px 32px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.leaderboard-board:hover {
+  border-color: rgba(2, 132, 199, 0.15);
+  box-shadow: 
+    0 12px 36px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .board-title-row {
@@ -112,9 +124,14 @@
   border-radius: var(--radius-lg);
   padding: 24px;
   background: var(--panel-soft);
-  transition: var(--transition);
+  backdrop-filter: blur(12px);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease;
   position: relative;
   overflow: hidden;
+}
+
+.rank-card:hover {
+  transform: translateY(-4px);
 }
 
 .rank-card::before {
@@ -135,13 +152,27 @@
   border-color: rgba(217, 119, 6, 0.2);
   box-shadow: 0 8px 24px rgba(217, 119, 6, 0.05);
 }
+.rank-card.rank-1:hover {
+  border-color: rgba(217, 119, 6, 0.35) !important;
+  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.1), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
 .rank-card.rank-2 {
   border-color: rgba(100, 116, 139, 0.15);
   box-shadow: 0 8px 24px rgba(100, 116, 139, 0.03);
 }
+.rank-card.rank-2:hover {
+  border-color: rgba(100, 116, 139, 0.28) !important;
+  box-shadow: 0 12px 32px rgba(100, 116, 139, 0.06), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
 .rank-card.rank-3 {
   border-color: rgba(180, 83, 9, 0.15);
   box-shadow: 0 8px 24px rgba(180, 83, 9, 0.03);
+}
+.rank-card.rank-3:hover {
+  border-color: rgba(180, 83, 9, 0.28) !important;
+  box-shadow: 0 12px 32px rgba(180, 83, 9, 0.06), 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .rank-card-top {

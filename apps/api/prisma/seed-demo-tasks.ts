@@ -3,12 +3,12 @@ import { PrismaClient, TaskDifficulty, TaskStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const skills = ["前端", "後端", "資料庫", "UI 設計", "QA 測試", "文件撰寫"];
+const skills = ["前端", "後端", "全端", "UI 設計", "QA 測試", "資料庫", "DevOps", "文件整理"];
 
 const tasks = [
   {
     title: "會員登入流程優化",
-    description: "調整登入、註冊與錯誤提示流程。",
+    description: "整理登入、註冊與錯誤提示流程，讓使用者操作更順。",
     reward: 6000,
     xpReward: 300,
     difficulty: TaskDifficulty.MEDIUM,
@@ -19,7 +19,7 @@ const tasks = [
   },
   {
     title: "任務列表篩選改善",
-    description: "改善搜尋、排序、分頁與篩選體驗。",
+    description: "改善搜尋、難度篩選、排序與分頁體驗。",
     reward: 4500,
     xpReward: 250,
     difficulty: TaskDifficulty.EASY,
@@ -30,7 +30,7 @@ const tasks = [
   },
   {
     title: "管理者使用者編輯功能",
-    description: "整理使用者資料、權限、技能與稱號設定。",
+    description: "讓管理者可以調整使用者姓名、權限、EXP、稱號與技能標籤。",
     reward: 7000,
     xpReward: 400,
     difficulty: TaskDifficulty.MEDIUM,
@@ -41,7 +41,7 @@ const tasks = [
   },
   {
     title: "任務詳情頁版面整理",
-    description: "調整任務資訊、錄取人員、提交紀錄與審核區塊。",
+    description: "整理任務說明、成員狀態、提交紀錄與任務結案流程。",
     reward: 5000,
     xpReward: 280,
     difficulty: TaskDifficulty.MEDIUM,
@@ -52,7 +52,7 @@ const tasks = [
   },
   {
     title: "每週挑戰資料檢查",
-    description: "確認挑戰進度、完成狀態與 EXP 發放紀錄。",
+    description: "檢查每週挑戰進度、完成狀態與 EXP 發放邏輯。",
     reward: 3500,
     xpReward: 200,
     difficulty: TaskDifficulty.EASY,
@@ -62,7 +62,7 @@ const tasks = [
   },
   {
     title: "排行榜資料驗證",
-    description: "確認本月 EXP、完成任務、準時率與協作榜資料。",
+    description: "確認本月 EXP、完成任務、準時率與協作排行榜資料正確。",
     reward: 4000,
     xpReward: 220,
     difficulty: TaskDifficulty.EASY,
@@ -73,7 +73,7 @@ const tasks = [
   },
   {
     title: "通知設定頁面整理",
-    description: "整理通知選項儲存與顯示狀態。",
+    description: "整理個人設定中的通知選項與儲存流程。",
     reward: 3000,
     xpReward: 180,
     difficulty: TaskDifficulty.EASY,
@@ -83,7 +83,7 @@ const tasks = [
   },
   {
     title: "任務驗收流程測試",
-    description: "測試提交、退回、再次提交、驗收與結案流程。",
+    description: "測試提交、退回修改、重新提交、驗收與任務結案流程。",
     reward: 6500,
     xpReward: 350,
     difficulty: TaskDifficulty.HARD,
@@ -93,7 +93,7 @@ const tasks = [
   },
   {
     title: "資料庫索引與查詢檢查",
-    description: "檢查任務、申請、提交與遊戲化資料查詢。",
+    description: "檢查任務、申請、提交與排行榜相關查詢是否需要索引。",
     reward: 8000,
     xpReward: 500,
     difficulty: TaskDifficulty.HARD,
@@ -104,12 +104,12 @@ const tasks = [
   },
   {
     title: "操作文件整理",
-    description: "整理啟動、測試與部署操作文件。",
+    description: "整理系統功能、啟動方式與測試流程文件。",
     reward: 2500,
     xpReward: 150,
     difficulty: TaskDifficulty.EASY,
     requirements: [
-      { name: "文件需求", headcount: 1, budgetPercent: 100, xpPercent: 100, skills: ["文件撰寫"] }
+      { name: "文件需求", headcount: 1, budgetPercent: 100, xpPercent: 100, skills: ["文件整理"] }
     ]
   }
 ];

@@ -24,7 +24,6 @@ enum TaskStatus {
 
 enum ApplicationStatus {
   PENDING
-  APPROVED
   ACCEPTED
   WAITLIST
   REJECTED
@@ -44,52 +43,47 @@ enum TaskDifficulty {
 
 enum ProfileTagType {
   SKILL
-  ROLE
 }
 
 model User {
-  id                 String            @id @default(cuid())
-  email              String            @unique
-  name               String
-  bio                String?
-  notificationSettings Json            @default("{\"email\":true,\"taskUpdates\":true,\"reviewResults\":true}")
-  passwordHash       String
-  role               Role              @default(EMPLOYEE)
-  xp                 Int               @default(0)
-  level              Int               @default(1)
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  createdTasks       Task[]            @relation("CreatedTasks")
-  assignedTasks      Task[]            @relation("AssignedTasks")
-  applications       TaskApplication[]
-  submissions        TaskSubmission[]
-  comments           Comment[]
-  badges             UserBadge[]
-  profileTags        UserProfileTag[]
-  expTransactions    ExpTransaction[]
-  titles             UserTitle[]
-  challengeProgress  UserChallengeProgress[]
+  id                   String                  @id @default(cuid())
+  email                String                  @unique
+  name                 String
+  bio                  String?
+  notificationSettings Json                    @default("{\"email\":true,\"taskUpdates\":true,\"reviewResults\":true}")
+  passwordHash         String
+  role                 Role                    @default(EMPLOYEE)
+  xp                   Int                     @default(0)
+  level                Int                     @default(1)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  createdTasks         Task[]                  @relation("CreatedTasks")
+  applications         TaskApplication[]
+  submissions          TaskSubmission[]
+  comments             Comment[]
+  badges               UserBadge[]
+  profileTags          UserProfileTag[]
+  expTransactions      ExpTransaction[]
+  challengeProgress    UserChallengeProgress[]
 }
 
 model Task {
-  id             String            @id @default(cuid())
-  title          String
-  description    String
-  reward         Int?
-  dueAt          DateTime?
-  difficulty     TaskDifficulty    @default(MEDIUM)
-  xpReward       Int               @default(100)
-  status         TaskStatus        @default(DRAFT)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  creatorId      String
-  creator        User              @relation("CreatedTasks", fields: [creatorId], references: [id])
-  assigneeId     String?
-  assignee       User?             @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  requirements   TaskRequirement[]
-  applications   TaskApplication[]
-  submissions    TaskSubmission[]
-  comments       Comment[]
+  id              String            @id @default(cuid())
+  title           String
+  description     String
+  reward          Int?
+  dueAt           DateTime?
+  difficulty      TaskDifficulty    @default(MEDIUM)
+  xpReward        Int               @default(100)
+  status          TaskStatus        @default(DRAFT)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  creatorId       String
+  creator         User              @relation("CreatedTasks", fields: [creatorId], references: [id])
+  requirements    TaskRequirement[]
+  applications    TaskApplication[]
+  submissions     TaskSubmission[]
+  comments        Comment[]
   expTransactions ExpTransaction[]
 }
 
@@ -115,37 +109,15 @@ model UserBadge {
   @@unique([userId, badgeId])
 }
 
-model Title {
-  id          String      @id @default(cuid())
-  code        String      @unique
-  name        String
-  description String
-  createdAt   DateTime    @default(now())
-  users       UserTitle[]
-}
-
-model UserTitle {
-  id       String   @id @default(cuid())
-  earnedAt DateTime @default(now())
-  active   Boolean  @default(false)
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  titleId  String
-  title    Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, titleId])
-}
-
 model ExpTransaction {
-  id          String   @id @default(cuid())
-  amount      Int
-  reason      String
-  roleName    String?
-  createdAt   DateTime @default(now())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskId      String?
-  task        Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([taskId])
@@ -179,25 +151,25 @@ model UserChallengeProgress {
 }
 
 model ProfileTag {
-  id        String           @id @default(cuid())
-  name      String
-  type      ProfileTagType
-  createdAt DateTime         @default(now())
-  users     UserProfileTag[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  type                  ProfileTagType
+  createdAt             DateTime               @default(now())
+  users                 UserProfileTag[]
   taskRequirementSkills TaskRequirementSkill[]
 
   @@unique([type, name])
 }
 
 model TaskRequirement {
-  id            String                   @id @default(cuid())
+  id            String                 @id @default(cuid())
   name          String?
-  headcount     Int                      @default(1)
-  budgetPercent Int                      @default(0)
-  xpPercent     Int                      @default(0)
-  createdAt     DateTime                 @default(now())
+  headcount     Int                    @default(1)
+  budgetPercent Int                    @default(0)
+  xpPercent     Int                    @default(0)
+  createdAt     DateTime               @default(now())
   taskId        String
-  task          Task                     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task          Task                   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   skills        TaskRequirementSkill[]
   applications  TaskApplication[]
 
@@ -227,40 +199,40 @@ model UserProfileTag {
 }
 
 model TaskApplication {
-  id          String            @id @default(cuid())
-  message     String?
-  status      ApplicationStatus @default(PENDING)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  taskId      String
-  task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  applicantId String
-  applicant   User              @relation(fields: [applicantId], references: [id])
-  skillMatchScore Float?
-  workloadScore   Float?
+  id                  String            @id @default(cuid())
+  message             String?
+  status              ApplicationStatus @default(PENDING)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  taskId              String
+  task                Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  applicantId         String
+  applicant           User              @relation(fields: [applicantId], references: [id])
+  skillMatchScore     Float?
+  workloadScore       Float?
   completionRateScore Float?
-  finalScore      Float?
-  assignedBudget  Int?
-  assignedXp      Int?
-  completedAt     DateTime?
-  onTime          Boolean?
-  requirementId   String?
-  requirement     TaskRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  finalScore          Float?
+  assignedBudget      Int?
+  assignedXp          Int?
+  completedAt         DateTime?
+  onTime              Boolean?
+  requirementId       String?
+  requirement         TaskRequirement?  @relation(fields: [requirementId], references: [id], onDelete: SetNull)
 
   @@unique([taskId, applicantId])
   @@index([requirementId])
 }
 
 model TaskSubmission {
-  id          String           @id @default(cuid())
-  content     String
-  status      SubmissionStatus @default(PENDING)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  taskId      String
-  task        Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  employeeId  String
-  employee    User             @relation(fields: [employeeId], references: [id])
+  id         String           @id @default(cuid())
+  content    String
+  status     SubmissionStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  taskId     String
+  task       Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   User             @relation(fields: [employeeId], references: [id])
 }
 
 model Comment {

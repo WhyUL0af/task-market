@@ -41,7 +41,6 @@ const publicUserSelect = {
 
 const taskInclude = {
   creator: { select: publicUserSelect },
-  assignee: { select: publicUserSelect },
   requirements: {
     include: {
       skills: {
@@ -98,7 +97,6 @@ export class TasksService {
       where: {
         OR: [
           { status: { in: [TaskStatus.OPEN, TaskStatus.APPLIED] } },
-          { assigneeId: user.id },
           { applications: { some: { applicantId: user.id } } }
         ]
       },
@@ -120,7 +118,6 @@ export class TasksService {
     if (
       user.role === "EMPLOYEE" &&
       !isVisibleMarketplaceTask &&
-      task.assigneeId !== user.id &&
       !task.applications.some((application) => application.applicantId === user.id)
     ) {
       throw new ForbiddenException("You cannot view this task");
@@ -333,7 +330,6 @@ export class TasksService {
         await tx.task.update({
           where: { id: taskId },
           data: {
-            assigneeId: application.applicantId,
             status: shouldStartTask ? TaskStatus.IN_PROGRESS : TaskStatus.APPLIED
           }
         });

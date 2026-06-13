@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
@@ -7,13 +7,13 @@ import { getCurrentUser } from "@/lib/auth";
 import type { Task, TaskApplication, TaskSubmission, User } from "@/lib/types";
 
 const taskStatusLabels: Record<string, string> = {
-  DRAFT: "草稿",
-  OPEN: "招募中",
-  APPLIED: "已申請",
-  IN_PROGRESS: "進行中",
-  REVIEW: "驗收中",
-  DONE: "已完成",
-  CANCELLED: "已取消"
+  DRAFT: "Draft",
+  OPEN: "Open",
+  APPLIED: "Applied",
+  IN_PROGRESS: "In Progress",
+  REVIEW: "Review",
+  DONE: "Done",
+  CANCELLED: "Cancelled"
 };
 
 const applicationStatusLabels: Record<string, string> = {
@@ -44,6 +44,12 @@ const statusClassMap: Record<string, string> = {
   DONE: "task-card-status-done",
   DRAFT: "task-card-status-draft",
   CANCELLED: "task-card-status-draft"
+};
+
+const difficultyClassMap: Record<string, string> = {
+  EASY: "task-card-diff-easy",
+  MEDIUM: "task-card-diff-medium",
+  HARD: "task-card-diff-hard"
 };
 
 type MemberStatus = {
@@ -127,6 +133,11 @@ export default function TaskDetailPage() {
   const overallProgress = task ? calculateOverallProgress(task, acceptedApplications) : 0;
   const isClosed = task?.status === "DONE";
   const canCloseTask = !!task && canCloseTaskWithRewards(task, acceptedApplications);
+  const hasActions =
+    canApply ||
+    (alreadyAppliedForTask && user?.role === "EMPLOYEE") ||
+    canSubmit ||
+    isClosed;
 
   async function applyTask(event: FormEvent) {
     event.preventDefault();
@@ -232,13 +243,16 @@ export default function TaskDetailPage() {
     <section className="tm-detail">
       <div className="page-head">
         <div className="tm-detail-title-block">
-          <span className="page-kicker">任務詳細資訊</span>
+          <span className="page-kicker">Task Information</span>
           <h1>{task.title}</h1>
           <div className="tm-chip-row">
             <span className={`task-card-status-badge ${statusClassMap[task.status] ?? "task-card-status-draft"}`}>
+              <span className="status-dot"></span>
               {taskStatusLabels[task.status] ?? task.status}
             </span>
-            <span className="tm-muted-chip">{difficultyLabels[task.difficulty] ?? task.difficulty}</span>
+            <span className={`task-card-diff-badge ${difficultyClassMap[task.difficulty] ?? "task-card-diff-medium"}`}>
+              {difficultyLabels[task.difficulty] ?? task.difficulty}
+            </span>
           </div>
         </div>
 
@@ -267,9 +281,36 @@ export default function TaskDetailPage() {
       ) : null}
 
       <section className="tm-reward-grid">
-        <RewardCard icon="$" label="預算" value={task.reward ? `NT$${task.reward.toLocaleString()}` : "未設定"} />
-        <RewardCard icon="*" label="EXP 獎勵" value={`${task.xpReward} EXP`} />
-        <RewardCard icon="T" label="截止時間" value={deadlineLabel(task.dueAt)} />
+        <RewardCard
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="預算"
+          value={task.reward ? `NT$${task.reward.toLocaleString()}` : "未設定"}
+          themeClass="tm-reward-card-budget"
+        />
+        <RewardCard
+          icon={
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          }
+          label="EXP 獎勵"
+          value={`${task.xpReward} EXP`}
+          themeClass="tm-reward-card-xp"
+        />
+        <RewardCard
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+          label="截止時間"
+          value={deadlineLabel(task.dueAt)}
+          themeClass="tm-reward-card-deadline"
+        />
       </section>
 
       <div className="tm-detail-grid">
@@ -369,11 +410,11 @@ export default function TaskDetailPage() {
               <h2>提交紀錄</h2>
             </div>
             {task.submissions.length === 0 ? (
-              <div className="tm-empty">目前沒有提交紀錄。</div>
+              <div className="tm-empty">暫無內容</div>
             ) : (
               <div className="tm-submission-list">
                 {submissionHistory(task).map((item) => (
-                  <article className="tm-submission-item" key={item.submission.id}>
+                  <article className={`tm-submission-item tm-submission-item-${item.submission.status.toLowerCase()}`} key={item.submission.id}>
                     <div className="tm-submission-top">
                       <div>
                         <strong>{item.employee.name}</strong>
@@ -410,82 +451,84 @@ export default function TaskDetailPage() {
         </main>
 
         <aside className="tm-side-column">
-          <section className="tm-card">
-            <h2>操作</h2>
-            <div className="tm-side-actions">
-              {canApply ? (
-                <form className="tm-action-form" onSubmit={applyTask}>
-                  {task.requirements.length > 0 ? (
+          {hasActions ? (
+            <section className="tm-card">
+              <h2>操作</h2>
+              <div className="tm-side-actions">
+                {canApply ? (
+                  <form className="tm-action-form" onSubmit={applyTask}>
+                    {task.requirements.length > 0 ? (
+                      <label className="field">
+                        <span className="label">申請需求</span>
+                        <select
+                          className="select"
+                          value={selectedRequirementId}
+                          onChange={(event) => setSelectedRequirementId(event.target.value)}
+                          required
+                        >
+                          {task.requirements.map((requirement, index) => {
+                            const acceptedCount = acceptedCountForRequirement(task, requirement.id);
+                            const full = acceptedCount >= requirement.headcount;
+                            return (
+                              <option disabled={full} key={requirement.id} value={requirement.id}>
+                                {requirement.name || `需求 ${index + 1}`} - {acceptedCount}/
+                                {requirement.headcount}
+                                {full ? "（已滿）" : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </label>
+                    ) : null}
                     <label className="field">
-                      <span className="label">申請需求</span>
-                      <select
-                        className="select"
-                        value={selectedRequirementId}
-                        onChange={(event) => setSelectedRequirementId(event.target.value)}
-                        required
-                      >
-                        {task.requirements.map((requirement, index) => {
-                          const acceptedCount = acceptedCountForRequirement(task, requirement.id);
-                          const full = acceptedCount >= requirement.headcount;
-                          return (
-                            <option disabled={full} key={requirement.id} value={requirement.id}>
-                              {requirement.name || `需求 ${index + 1}`} - {acceptedCount}/
-                              {requirement.headcount}
-                              {full ? "（已滿）" : ""}
-                            </option>
-                          );
-                        })}
-                      </select>
+                      <span className="label">申請訊息</span>
+                      <textarea
+                        className="task-detail-form-textarea"
+                        value={message}
+                        onChange={(event) => setMessage(event.target.value)}
+                      />
                     </label>
-                  ) : null}
-                  <label className="field">
-                    <span className="label">申請訊息</span>
-                    <textarea
-                      className="task-detail-form-textarea"
-                      value={message}
-                      onChange={(event) => setMessage(event.target.value)}
-                    />
-                  </label>
-                  <button className="task-detail-btn task-detail-btn-primary" type="submit">
-                    申請加入
-                  </button>
-                </form>
-              ) : null}
+                    <button className="task-detail-btn task-detail-btn-primary" type="submit">
+                      申請加入
+                    </button>
+                  </form>
+                ) : null}
 
-              {alreadyAppliedForTask && user?.role === "EMPLOYEE" ? (
-                <div className="tm-note">你已經申請過這個任務。</div>
-              ) : null}
+                {alreadyAppliedForTask && user?.role === "EMPLOYEE" ? (
+                  <div className="tm-note">你已經申請過這個任務。</div>
+                ) : null}
 
-              {canSubmit ? (
-                <form className="tm-action-form" onSubmit={submitWork}>
-                  <label className="field">
-                    <span className="label">成果內容</span>
-                    <textarea
-                      className="task-detail-form-textarea"
-                      value={submission}
-                      onChange={(event) => setSubmission(event.target.value)}
-                      required
-                    />
-                  </label>
-                  <button className="task-detail-btn task-detail-btn-primary" type="submit">
-                    {hasPreviousSubmission(task, user) ? "更新提交" : "提交成果"}
-                  </button>
-                </form>
-              ) : null}
+                {canSubmit ? (
+                  <form className="tm-action-form" onSubmit={submitWork}>
+                    <label className="field">
+                      <span className="label">成果內容</span>
+                      <textarea
+                        className="task-detail-form-textarea"
+                        value={submission}
+                        onChange={(event) => setSubmission(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <button className="task-detail-btn task-detail-btn-primary" type="submit">
+                      {hasPreviousSubmission(task, user) ? "更新提交" : "提交成果"}
+                    </button>
+                  </form>
+                ) : null}
 
-              {isClosed ? <div className="tm-note">任務已結案，提交已鎖定。</div> : null}
-            </div>
-          </section>
+                {isClosed ? <div className="tm-note">任務已結案，提交已鎖定。</div> : null}
+              </div>
+            </section>
+          ) : null}
 
           {user?.role === "ADMIN" ? (
             <section className="tm-card">
               <h2>申請審核</h2>
               {task.applications.length === 0 ? (
-                <div className="tm-empty">目前沒有申請。</div>
+                <div className="tm-empty">暫無內容</div>
               ) : (
                 <div className="tm-application-list">
                   {task.applications.map((application) => (
-                    <article className="tm-application-item" key={application.id}>
+                    <article className={`tm-application-item tm-application-item-${application.status.toLowerCase()}`} key={application.id}>
                       <div>
                         <strong>{application.applicant.name}</strong>
                         <span>{application.applicant.email}</span>
@@ -538,7 +581,7 @@ export default function TaskDetailPage() {
             <h2>留言</h2>
             <div className="tm-comment-list">
               {task.comments.length === 0 ? (
-                <div className="tm-empty">目前沒有留言。</div>
+                <div className="tm-empty">暫無內容</div>
               ) : (
                 task.comments.map((item) => (
                   <div className="task-detail-comment-card" key={item.id}>
@@ -569,9 +612,19 @@ export default function TaskDetailPage() {
   );
 }
 
-function RewardCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+function RewardCard({
+  icon,
+  label,
+  value,
+  themeClass
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  themeClass: string;
+}) {
   return (
-    <div className="tm-reward-card">
+    <div className={`tm-reward-card ${themeClass}`}>
       <span className="tm-reward-icon">{icon}</span>
       <div>
         <span>{label}</span>
@@ -772,7 +825,7 @@ function requirementLabel(task: Task, requirementId: string) {
 
 function deadlineLabel(value?: string | null) {
   if (!value) {
-    return "長期";
+    return "無期限";
   }
   const deadline = new Date(value).getTime();
   const today = new Date();

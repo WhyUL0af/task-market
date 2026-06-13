@@ -2,39 +2,35 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const tags = [
-  { name: "程式開發", type: "SKILL" as const },
-  { name: "前端", type: "SKILL" as const },
-  { name: "後端", type: "SKILL" as const },
-  { name: "UI 設計", type: "SKILL" as const },
-  { name: "文書處理", type: "SKILL" as const },
-  { name: "資料整理", type: "SKILL" as const },
-  { name: "活動支援", type: "SKILL" as const },
-  { name: "前端工程師", type: "ROLE" as const },
-  { name: "後端工程師", type: "ROLE" as const },
-  { name: "全端工程師", type: "ROLE" as const },
-  { name: "UI/UX 設計師", type: "ROLE" as const },
-  { name: "QA 測試工程師", type: "ROLE" as const },
-  { name: "DevOps 工程師", type: "ROLE" as const },
-  { name: "資料工程師", type: "ROLE" as const },
-  { name: "產品經理", type: "ROLE" as const }
+const skills = [
+  "前端",
+  "後端",
+  "全端",
+  "UI 設計",
+  "QA 測試",
+  "資料庫",
+  "DevOps",
+  "文件整理"
 ];
 
 async function main() {
-  for (const tag of tags) {
+  for (const name of skills) {
     await prisma.profileTag.upsert({
       where: {
         type_name: {
-          type: tag.type,
-          name: tag.name
+          type: "SKILL",
+          name
         }
       },
       update: {},
-      create: tag
+      create: {
+        type: "SKILL",
+        name
+      }
     });
   }
 
-  console.log(`Profile tags ready: ${tags.length}`);
+  console.log(`Skill tags ready: ${skills.length}`);
 }
 
 main()
