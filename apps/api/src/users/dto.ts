@@ -1,6 +1,5 @@
 import {
   IsArray,
-  IsBoolean,
   IsEmail,
   IsEnum,
   IsInt,
@@ -85,36 +84,4 @@ export class UpdateProfileDto {
     taskUpdates?: boolean;
     reviewResults?: boolean;
   };
-}
-
-export class NotificationSettingsDto {
-  @IsOptional()
-  @IsBoolean()
-  email?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  taskUpdates?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  reviewResults?: boolean;
-}
-
-export class CreateProfileTagDto {
-  @IsString()
-  name!: string;
-
-  @IsEnum(["SKILL"])
-  type!: "SKILL";
-}
-
-export class UpdateProfileTagDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsEnum(["SKILL"])
-  type?: "SKILL";
 }

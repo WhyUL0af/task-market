@@ -7,13 +7,26 @@ import { api } from "@/lib/api";
 import { clearSession, getCurrentUser } from "@/lib/auth";
 import type { User } from "@/lib/types";
 
+const commonLinks = [
+  { href: "/tasks", label: "任務" },
+  { href: "/my-tasks", label: "我的任務" },
+  { href: "/leaderboard", label: "排行榜" },
+  { href: "/achievements", label: "成就" },
+  { href: "/weekly-challenges", label: "每週挑戰" }
+];
+
+const adminLinks = [
+  { href: "/users", label: "使用者管理" },
+  { href: "/dev/access-logs", label: "訪問紀錄" }
+];
+
 export function Nav() {
   const [user, setUser] = useState<User | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
     setUser(getCurrentUser());
-  }, [pathname]); // Update user status when navigating
+  }, [pathname]);
 
   async function logout() {
     try {
@@ -26,58 +39,41 @@ export function Nav() {
   }
 
   function isActive(path: string) {
-    if (path === "/") {
-      return pathname === "/";
-    }
-    return pathname === path || (path !== "/" && pathname.startsWith(`${path}/`));
+    return pathname === path || pathname.startsWith(`${path}/`);
   }
 
   return (
     <nav className="nav">
-      <Link href="/tasks" className={isActive("/tasks") ? "active" : ""}>
-        任務
-      </Link>
-
-      <Link href="/my-tasks" className={isActive("/my-tasks") ? "active" : ""}>
-        我的任務
-      </Link>
-
-      <Link href="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>
-        排行榜
-      </Link>
-
-      <Link href="/achievements" className={isActive("/achievements") ? "active" : ""}>
-        成就
-      </Link>
-
-      <Link href="/weekly-challenges" className={isActive("/weekly-challenges") ? "active" : ""}>
-        每週挑戰
-      </Link>
+      {commonLinks.map((link) => (
+        <Link className={isActive(link.href) ? "active" : ""} href={link.href} key={link.href}>
+          {link.label}
+        </Link>
+      ))}
 
       {user ? (
-        <Link href="/profile" className={isActive("/profile") ? "active" : ""}>
-          個人資料
+        <Link className={isActive("/profile") ? "active" : ""} href="/profile">
+          個人設定
         </Link>
       ) : null}
 
-      {user?.role === "ADMIN" ? (
-        <Link href="/users" className={isActive("/users") ? "active" : ""}>
-          使用者管理
-        </Link>
-      ) : null}
-
-      {user?.role === "ADMIN" ? (
-        <Link href="/profile-tags" className={isActive("/profile-tags") ? "active" : ""}>
-          標籤管理
-        </Link>
-      ) : null}
+      {user?.role === "ADMIN"
+        ? adminLinks.map((link) => (
+            <Link
+              className={isActive(link.href) ? "active" : ""}
+              href={link.href}
+              key={link.href}
+            >
+              {link.label}
+            </Link>
+          ))
+        : null}
 
       {user ? (
-        <button className="link-button" type="button" onClick={logout}>
+        <button className="link-button" onClick={logout} type="button">
           登出
         </button>
       ) : (
-        <Link href="/login" className={pathname === "/login" ? "active" : ""}>
+        <Link className={pathname === "/login" ? "active" : ""} href="/login">
           登入
         </Link>
       )}

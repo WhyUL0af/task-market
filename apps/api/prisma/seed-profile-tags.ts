@@ -5,12 +5,12 @@ const prisma = new PrismaClient();
 const skills = [
   "前端",
   "後端",
-  "全端",
   "UI 設計",
   "QA 測試",
-  "資料庫",
+  "資料整理",
+  "文件撰寫",
   "DevOps",
-  "文件整理"
+  "簡報製作"
 ];
 
 async function main() {

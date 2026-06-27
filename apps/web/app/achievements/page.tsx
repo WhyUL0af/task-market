@@ -5,6 +5,16 @@ import { api } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import type { Badge, GamificationProfile } from "@/lib/types";
 
+const badgeSymbols: Record<string, string> = {
+  FIRST_TASK: "✓",
+  ON_TIME_MASTER: "⏱",
+  TEAM_PLAYER: "◎",
+  ROLE_EXPERT: "◆",
+  WEEKLY_CHALLENGER: "↻",
+  RELIABLE_WORKER: "▣",
+  HIGH_VALUE: "★"
+};
+
 export default function AchievementsPage() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
@@ -69,55 +79,21 @@ export default function AchievementsPage() {
         {badges.map((badge) => {
           const earned = earnedCodes.has(badge.code);
           return (
-            <div
-              className="card"
-              key={badge.id}
-              style={{
-                background: earned
-                  ? "linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, var(--panel) 100%)"
-                  : "var(--panel)",
-                borderColor: earned ? "rgba(16, 185, 129, 0.3)" : "var(--line)",
-                boxShadow: earned ? "0 8px 32px rgba(16, 185, 129, 0.05)" : "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                justifyContent: "space-between"
-              }}
-            >
-              <div
-                style={{
-                  alignItems: "flex-start",
-                  display: "flex",
-                  gap: "12px",
-                  justifyContent: "space-between"
-                }}
-              >
-                <div>
-                  <h3 style={{ margin: "0 0 6px" }}>{badge.name}</h3>
-                  <p className="muted" style={{ fontSize: "13px", lineHeight: "1.5", margin: 0 }}>
-                    {badge.description || "尚未設定說明"}
-                  </p>
+            <article className={`achievement-card ${earned ? "earned" : ""}`} key={badge.id}>
+              <div className="achievement-icon" aria-hidden="true">
+                {badgeSymbols[badge.code] ?? badge.icon ?? "•"}
+              </div>
+
+              <div className="achievement-content">
+                <div className="achievement-title-row">
+                  <h3>{badge.name}</h3>
+                  <span className={`achievement-state ${earned ? "earned" : ""}`}>
+                    {earned ? "已解鎖" : "未解鎖"}
+                  </span>
                 </div>
-                <span
-                  style={{
-                    background: earned ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                    border: earned ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid var(--line)",
-                    borderRadius: "4px",
-                    color: earned ? "#34d399" : "var(--muted)",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    padding: "3px 8px"
-                  }}
-                >
-                  {earned ? "已解鎖" : "未解鎖"}
-                </span>
+                <p>{badge.description || "尚未設定說明"}</p>
               </div>
-              <div style={{ alignItems: "center", display: "flex", gap: "8px" }}>
-                <span className="badge" style={{ fontSize: "11px" }}>
-                  圖示：{badge.icon}
-                </span>
-              </div>
-            </div>
+            </article>
           );
         })}
       </div>

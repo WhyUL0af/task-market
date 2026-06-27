@@ -21,33 +21,33 @@ export function RankIcon({ level, size = 16, className, style }: RankIconProps) 
   };
 
   switch (normalized) {
-    case 1: // 新秀 - Sprout
+    case 1:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c0 2-.52 3.5-1.6 9.2A7 7 0 0 1 11 20z" />
           <path d="M19 2c-2.26 4.33-5.27 7.14-8 8" />
         </svg>
       );
-    case 2: // 能手 - Compass
+    case 2:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
           <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
         </svg>
       );
-    case 3: // 好手 - Shield
+    case 3:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       );
-    case 4: // 達人 - Lightning
+    case 4:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
       );
-    case 5: // 專家 - Target
+    case 5:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
@@ -55,21 +55,21 @@ export function RankIcon({ level, size = 16, className, style }: RankIconProps) 
           <circle cx="12" cy="12" r="2" />
         </svg>
       );
-    case 6: // 菁英 - Award
+    case 6:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="8" r="7" />
           <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
         </svg>
       );
-    case 7: // 首席 - Crown
+    case 7:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
           <path d="M3 20h18v2H3z" />
         </svg>
       );
-    case 8: // 傳奇 - Trophy
+    case 8:
     default:
       return (
         <svg style={iconStyle} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

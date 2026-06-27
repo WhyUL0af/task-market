@@ -9,7 +9,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Response } from "express";
 import { AuthService } from "./auth.service";
-import { LoginDto, RegisterDto } from "./dto";
+import { LoginDto } from "./dto";
 import { LoginRateLimitGuard } from "./login-rate-limit.guard";
 
 @Controller("auth")
@@ -20,7 +20,7 @@ export class AuthController {
   ) {}
 
   @Post("register")
-  register(_dto: RegisterDto) {
+  register() {
     throw new ForbiddenException("Public registration is disabled");
   }
 

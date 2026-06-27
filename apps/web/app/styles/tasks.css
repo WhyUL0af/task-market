@@ -1,4 +1,4 @@
-/* Bento Toolbar */
+
 .task-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -20,7 +20,7 @@
   min-width: 150px;
 }
 
-/* Bento Tabs */
+
 .task-tabs {
   display: flex;
   overflow-x: auto;
@@ -62,7 +62,7 @@
   color: var(--foreground);
 }
 
-/* Task Cards Styles */
+
 .task-card {
   position: relative;
   display: flex;
@@ -291,7 +291,7 @@
   color: var(--primary-dark);
 }
 
-/* Bento Quest Card Accents */
+
 .card.task-card-easy:hover {
   border-color: rgba(16, 185, 129, 0.35) !important;
   box-shadow: 0 12px 32px rgba(16, 185, 129, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
@@ -305,7 +305,7 @@
   box-shadow: 0 12px 32px rgba(244, 63, 94, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-/* Pagination */
+
 .pagination {
   display: flex;
   align-items: center;
@@ -315,7 +315,7 @@
   font-size: 14px;
 }
 
-/* Detail Page Custom styles */
+
 .tm-detail {
   display: grid;
   gap: 24px;
@@ -642,19 +642,11 @@
 .tm-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #0284c7, #6366f1, #a855f7); /* Vibrant Indigo gradient */
+  background: linear-gradient(90deg, #0284c7, #6366f1, #a855f7); 
   position: relative;
 }
 
-.tm-progress-number {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--foreground);
-}
-
 .tm-member-groups,
-.tm-progress-groups,
 .tm-submission-list,
 .tm-application-list,
 .tm-comment-list,
@@ -663,16 +655,14 @@
   gap: 12px;
 }
 
-.tm-member-group,
-.tm-progress-group {
+.tm-member-group {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--panel-soft);
   padding: 20px;
 }
 
-.tm-member-group-title,
-.tm-progress-group h3 {
+.tm-member-group-title {
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -711,7 +701,7 @@
   width: 32px;
   height: 32px;
   border-radius: 99px;
-  background: linear-gradient(135deg, var(--primary), var(--violet)); /* 藍到青 */
+  background: linear-gradient(135deg, var(--primary), var(--violet)); 
   color: #ffffff;
   display: grid;
   place-items: center;
@@ -742,41 +732,6 @@
   font-size: 12px;
   font-weight: 600;
 }
-
-.tm-progress-line {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.tm-progress-line:last-child {
-  border-bottom: none;
-}
-
-.tm-progress-line span {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.tm-progress-line em {
-  font-style: normal;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.tm-status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 99px;
-}
-
-.tm-status-dot.task-detail-status-pill-accepted { background: var(--success); }
-.tm-status-dot.task-detail-status-pill-pending { background: var(--warning); }
-.tm-status-dot.task-detail-status-pill-rejected { background: var(--danger); }
-.tm-status-dot.task-detail-status-pill-other { background: var(--primary); }
 
 .tm-submission-item,
 .tm-application-item {
@@ -967,12 +922,12 @@
   font-size: 13px;
 }
 
-/* Sidebar tightness overrides */
+
 .tm-side-column .tm-card {
   padding: 22px !important;
 }
 
-/* Sidebar header consistency (vertical gradient bar) */
+
 .tm-card > h2 {
   position: relative;
   padding-left: 14px;
@@ -990,7 +945,7 @@
   background: linear-gradient(to bottom, var(--primary), var(--violet));
 }
 
-/* Scrollable lists with auto scaling */
+
 .tm-comment-list,
 .tm-application-list,
 .tm-submission-list {
@@ -999,7 +954,7 @@
   padding-right: 6px;
 }
 
-/* Scrollbar styling */
+
 .tm-comment-list::-webkit-scrollbar,
 .tm-application-list::-webkit-scrollbar,
 .tm-submission-list::-webkit-scrollbar {

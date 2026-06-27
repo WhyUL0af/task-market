@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { saveSession } from "@/lib/auth";
-import { maxRankLevel, rankTitle, getLevelByTitle, rankTitles } from "@/lib/rank-title";
+import { maxRankLevel, rankTitle, rankTitles } from "@/lib/rank-title";
 import { RankBadge, RankIcon } from "@/components/rank-badge";
 import type {
   GamificationProfile,
@@ -16,6 +16,16 @@ const defaultNotifications: NotificationSettings = {
   email: true,
   taskUpdates: true,
   reviewResults: true
+};
+
+const badgeSymbols: Record<string, string> = {
+  FIRST_TASK: "✓",
+  ON_TIME_MASTER: "⏱",
+  TEAM_PLAYER: "◎",
+  ROLE_EXPERT: "◆",
+  WEEKLY_CHALLENGER: "↻",
+  RELIABLE_WORKER: "▣",
+  HIGH_VALUE: "★"
 };
 
 export default function ProfilePage() {
@@ -141,7 +151,6 @@ export default function ProfilePage() {
 
       {error ? <p className="error">{error}</p> : null}
 
-      {/* Dashboard KPI Indicators */}
       <div
         className="kpi-grid"
         style={{
@@ -151,7 +160,6 @@ export default function ProfilePage() {
           marginBottom: "8px"
         }}
       >
-        {/* KPI 1: Level & Rank */}
         <div className="panel stack" style={{ gap: "12px", padding: "24px" }}>
           <span className="label" style={{ fontSize: "11px" }}>當前等級</span>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -165,7 +173,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* KPI 2: Equipped Badge */}
         <div className="panel stack" style={{ gap: "12px", padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span className="label" style={{ fontSize: "11px" }}>配戴成就</span>
@@ -185,20 +192,27 @@ export default function ProfilePage() {
           </div>
           <div style={{ display: "flex", alignItems: "center", minHeight: "42px" }}>
             {gameProfile?.activeBadge ? (
-              <RankBadge
-                level={getLevelByTitle(gameProfile.activeBadge.name)}
-                text={gameProfile.activeBadge.name}
+              <button
                 className="badge"
+                type="button"
                 style={{
+                  alignItems: "center",
                   backgroundColor: "rgba(2, 132, 199, 0.08)",
-                  color: "var(--primary)",
                   borderColor: "rgba(2, 132, 199, 0.25)",
+                  color: "var(--primary)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  gap: "8px",
                   padding: "6px 14px",
-                  fontSize: "13px",
-                  cursor: "pointer"
+                  fontSize: "13px"
                 }}
                 onClick={() => setShowBadgeModal(true)}
-              />
+              >
+                <span aria-hidden="true" style={{ fontSize: "15px", fontWeight: 800 }}>
+                  {badgeSymbols[gameProfile.activeBadge.code] ?? gameProfile.activeBadge.icon ?? "•"}
+                </span>
+                <span>{gameProfile.activeBadge.name}</span>
+              </button>
             ) : (
               <span
                 className="muted"
@@ -211,7 +225,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* KPI 3: EXP Progress */}
         <div className="panel stack" style={{ gap: "10px", padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span className="label" style={{ fontSize: "11px" }}>EXP 進度</span>
@@ -252,7 +265,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* KPI 4: Completion Rate */}
         <div className="panel stack" style={{ gap: "12px", padding: "24px" }}>
           <span className="label" style={{ fontSize: "11px" }}>驗收完成率</span>
           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
@@ -268,7 +280,6 @@ export default function ProfilePage() {
 
       <div className="split">
         <form className="stack" style={{ gap: "24px" }} onSubmit={submit}>
-          {/* Panel 1: Basic Information */}
           <section className="panel stack" style={{ gap: "20px" }}>
             <div>
               <h2>基本資料</h2>
@@ -299,13 +310,11 @@ export default function ProfilePage() {
             </label>
           </section>
 
-          {/* Panel 2: My Skill Tags */}
           <section className="panel stack" style={{ gap: "12px" }}>
             <h2>我的技能標籤</h2>
             <TagStrip values={profile.skillTags ?? []} emptyText="尚未設定技能標籤。" />
           </section>
 
-          {/* Panel 3: Notification Settings */}
           <section className="panel stack" style={{ gap: "20px" }}>
             <h2>通知管道設定</h2>
             <div className="toggle-grid">
@@ -335,7 +344,6 @@ export default function ProfilePage() {
         </form>
 
         <aside className="stack" style={{ gap: "24px" }}>
-          {/* Stats Box */}
           <section className="panel stack" style={{ gap: "14px" }}>
             <h2>任務統計資料</h2>
             <div className="stat-grid">
@@ -348,7 +356,6 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* EXP History */}
           <section className="panel stack" style={{ gap: "14px" }}>
             <h2>EXP 紀錄</h2>
             {gameProfile?.recentExp.length ? (
@@ -363,9 +370,21 @@ export default function ProfilePage() {
                       border: "1px solid var(--line)"
                     }}
                   >
-                    <div className="row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "13px" }}>{item.reason}</span>
-                      <strong style={{ color: "var(--primary)" }}>+{item.amount} EXP</strong>
+                    <div
+                      className="row"
+                      style={{
+                        alignItems: "center",
+                        display: "grid",
+                        gap: "12px",
+                        gridTemplateColumns: "minmax(0, 1fr) max-content"
+                      }}
+                    >
+                      <span style={{ fontSize: "13px", lineHeight: "1.5", minWidth: 0 }}>
+                        {item.reason}
+                      </span>
+                      <strong style={{ color: "var(--primary)", whiteSpace: "nowrap" }}>
+                        +{item.amount} EXP
+                      </strong>
                     </div>
                   </div>
                 ))}
@@ -522,7 +541,7 @@ export default function ProfilePage() {
               {gameProfile?.badges.length ? (
                 gameProfile.badges.map((item) => {
                   const isActive = gameProfile.activeBadge?.id === item.badge.id;
-                  const level = getLevelByTitle(item.badge.name);
+                  const symbol = badgeSymbols[item.badge.code] ?? item.badge.icon ?? "•";
                   return (
                     <div
                       key={item.badge.id}
@@ -543,7 +562,6 @@ export default function ProfilePage() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
-                        {/* Left Side: Beautiful Squircle with Vector Icon */}
                         <div
                           style={{
                             width: "48px",
@@ -553,14 +571,15 @@ export default function ProfilePage() {
                             placeItems: "center",
                             background: isActive ? "rgba(2, 132, 199, 0.1)" : "rgba(15, 23, 42, 0.03)",
                             color: isActive ? "var(--primary)" : "var(--muted)",
+                            fontSize: "22px",
+                            fontWeight: 800,
                             transition: "all 0.2s ease",
                             flexShrink: 0
                           }}
                         >
-                          <RankIcon level={level} size={22} />
+                          {symbol}
                         </div>
 
-                        {/* Middle: Name, Description & Short tag */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                             <span style={{ fontWeight: 700, fontSize: "16px", color: isActive ? "var(--primary)" : "var(--foreground)" }}>
@@ -577,7 +596,7 @@ export default function ProfilePage() {
                                 letterSpacing: "0.02em"
                               }}
                             >
-                              {item.badge.icon}
+                              {symbol}
                             </span>
                           </div>
                           <span className="muted" style={{ fontSize: "13px", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
@@ -586,7 +605,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Right Side: Radio/Check Indicator */}
                       <div
                         style={{
                           width: "22px",
@@ -633,7 +651,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Toast Notification Container */}
       <div className="toast-container">
         {toasts.map((toast) => (
           <div

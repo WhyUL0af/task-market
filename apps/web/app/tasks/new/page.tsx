@@ -107,7 +107,7 @@ export default function NewTaskPage() {
         </div>
       </div>
 
-      <form className="split" onSubmit={onSubmit} style={{ alignItems: "stretch" }}>
+      <form className="split" onSubmit={onSubmit}>
         <div className="stack" style={{ gap: "24px" }}>
           <div className="panel stack" style={{ padding: "24px" }}>
             <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "8px" }}>
@@ -260,7 +260,7 @@ export default function NewTaskPage() {
           </div>
         </div>
 
-        <aside className="stack" style={{ gap: "24px" }}>
+        <aside className="stack" style={{ alignSelf: "start", gap: "24px" }}>
           <div className="panel stack" style={{ padding: "24px" }}>
             <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "16px" }}>
               任務設定

@@ -52,12 +52,6 @@ const difficultyClassMap: Record<string, string> = {
   HARD: "task-card-diff-hard"
 };
 
-type MemberStatus = {
-  className: string;
-  label: string;
-  mark: string;
-};
-
 export default function TaskDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -114,6 +108,7 @@ export default function TaskDetailPage() {
     () => !!task?.applications.some((application) => application.applicant.id === user?.id),
     [task, user]
   );
+  const latestSubmission = task ? latestTaskSubmission(task) : undefined;
 
   const canApply =
     !!task &&
@@ -126,11 +121,8 @@ export default function TaskDetailPage() {
     user?.role === "EMPLOYEE" &&
     !!acceptedApplicationForMe &&
     (task.status === "IN_PROGRESS" || task.status === "REVIEW") &&
-    !task.submissions.some(
-      (item) => item.employee.id === user.id && item.status === "PENDING"
-    );
+    latestSubmission?.status !== "PENDING";
 
-  const overallProgress = task ? calculateOverallProgress(task, acceptedApplications) : 0;
   const isClosed = task?.status === "DONE";
   const canCloseTask = !!task && canCloseTaskWithRewards(task, acceptedApplications);
   const hasActions =
@@ -393,21 +385,12 @@ export default function TaskDetailPage() {
 
           <section className="tm-card tm-card-spacious">
             <div className="tm-section-head tm-section-head-inline">
-              <h2>成員進度</h2>
-              <strong className="tm-progress-number">{overallProgress}%</strong>
-            </div>
-            <div className="tm-progress-track tm-progress-track-large">
-              <div className="tm-progress-fill" style={{ width: `${overallProgress}%` }} />
-            </div>
-
-            <div className="tm-progress-groups">
-              <ProgressGroup applications={acceptedApplications} groupName="已錄取人員" task={task} />
-            </div>
-          </section>
-
-          <section className="tm-card tm-card-spacious">
-            <div className="tm-section-head">
               <h2>提交紀錄</h2>
+              {latestSubmission ? (
+                <span className={`task-detail-status-pill ${submissionPillClass(latestSubmission.status)}`}>
+                  最新版：{submissionStatusLabels[latestSubmission.status]}
+                </span>
+              ) : null}
             </div>
             {task.submissions.length === 0 ? (
               <div className="tm-empty">暫無內容</div>
@@ -510,7 +493,7 @@ export default function TaskDetailPage() {
                       />
                     </label>
                     <button className="task-detail-btn task-detail-btn-primary" type="submit">
-                      {hasPreviousSubmission(task, user) ? "更新提交" : "提交成果"}
+                      {hasPreviousSubmission(task) ? "提交新版" : "提交成果"}
                     </button>
                   </form>
                 ) : null}
@@ -671,37 +654,6 @@ function MemberGroup({
   );
 }
 
-function ProgressGroup({
-  applications,
-  groupName,
-  task
-}: {
-  applications: TaskApplication[];
-  groupName: string;
-  task: Task;
-}) {
-  return (
-    <div className="tm-progress-group">
-      <h3>{groupName}</h3>
-      {applications.length === 0 ? (
-        <div className="tm-progress-line muted">尚未錄取成員</div>
-      ) : (
-        applications.map((application) => {
-          const status = getMemberStatus(task, application);
-          const latest = latestSubmissionFor(task, application.applicant.id);
-          return (
-            <div className="tm-progress-line" key={application.id}>
-              <span className={`tm-status-dot ${status.className}`}>{status.mark}</span>
-              <span>{application.applicant.name}</span>
-              <em>{latest ? submissionStatusLabels[latest.status] : status.label}</em>
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
-
 function UserAvatar({ user }: { user: User }) {
   return (
     <div className="tm-avatar" title={`${user.name} (${user.email})`}>
@@ -710,104 +662,35 @@ function UserAvatar({ user }: { user: User }) {
   );
 }
 
-function getMemberStatus(task: Task, application: TaskApplication): MemberStatus {
-  const latestSubmission = latestSubmissionFor(task, application.applicant.id);
-
-  if (latestSubmission?.status === "REJECTED") {
-    return {
-      className: "task-detail-status-pill-rejected",
-      label: "退回修改",
-      mark: "!"
-    };
-  }
-
-  if (latestSubmission?.status === "PENDING") {
-    return {
-      className: "task-detail-status-pill-pending",
-      label: "待驗收",
-      mark: "..."
-    };
-  }
-
-  if (task.status === "DONE") {
-    return {
-      className: "task-detail-status-pill-accepted",
-      label: "已完成",
-      mark: "OK"
-    };
-  }
-
-  if (latestSubmission?.status === "ACCEPTED") {
-    return {
-      className: "task-detail-status-pill-accepted",
-      label: "已驗收，等待結案",
-      mark: "OK"
-    };
-  }
-
-  return {
-    className: "task-detail-status-pill-other",
-    label: "進行中",
-    mark: "..."
-  };
-}
-
 function submissionHistory(task: Task) {
-  const grouped = task.submissions.reduce<Record<string, TaskSubmission[]>>((groups, submission) => {
-    const list = groups[submission.employee.id] ?? [];
-    list.push(submission);
-    groups[submission.employee.id] = list;
-    return groups;
-  }, {});
+  const chronological = [...task.submissions].sort(
+    (a, b) => dateValue(a.createdAt) - dateValue(b.createdAt)
+  );
 
-  return Object.values(grouped)
-    .flatMap((submissions) => {
-      const chronological = [...submissions].sort(
-        (a, b) => dateValue(a.createdAt) - dateValue(b.createdAt)
-      );
-      return chronological.map((submission, index) => ({
-        employee: submission.employee,
-        submission,
-        version: `v${index + 1}`
-      }));
-    })
+  return chronological
+    .map((submission, index) => ({
+      employee: submission.employee,
+      submission,
+      version: `v${index + 1}`
+    }))
     .sort((a, b) => dateValue(b.submission.createdAt) - dateValue(a.submission.createdAt));
 }
 
-function latestSubmissionFor(task: Task, userId: string) {
-  return task.submissions
-    .filter((submission) => submission.employee.id === userId)
-    .sort((a, b) => dateValue(b.createdAt) - dateValue(a.createdAt))[0];
-}
-
-function calculateOverallProgress(task: Task, applications: TaskApplication[]) {
-  if (applications.length === 0) {
-    return 0;
-  }
-  const completed = applications.filter((application) => {
-    const latest = latestSubmissionFor(task, application.applicant.id);
-    return task.status === "DONE" || latest?.status === "ACCEPTED";
-  }).length;
-  return Math.round((completed / applications.length) * 100);
+function latestTaskSubmission(task: Task) {
+  return [...task.submissions].sort((a, b) => dateValue(b.createdAt) - dateValue(a.createdAt))[0];
 }
 
 function canCloseTaskWithRewards(task: Task, applications: TaskApplication[]) {
   if (applications.length === 0 || task.status === "DONE") {
     return false;
   }
-  return applications.every((application) =>
-    latestSubmissionFor(task, application.applicant.id)?.status === "ACCEPTED"
-  );
+  return latestTaskSubmission(task)?.status === "ACCEPTED";
 }
 
-function hasPreviousSubmission(task: Task, user: User | null) {
-  if (!user) {
-    return false;
-  }
-  return !!latestSubmissionFor(task, user.id);
+function hasPreviousSubmission(task: Task) {
+  return task.submissions.length > 0;
 }
 
-// Helper to count accepted members for a requirement
 function acceptedCountForRequirement(task: Task, requirementId: string) {
   return task.applications.filter(
     (application) =>

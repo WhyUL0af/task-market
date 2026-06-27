@@ -12,7 +12,9 @@
     "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
     "prisma:generate": "npm run prisma:generate -w apps/api",
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
-    "seed:admin": "npm run seed:admin -w apps/api"
+    "seed:admin": "npm run seed:admin -w apps/api",
+    "seed:profile-tags": "npm run seed:profile-tags -w apps/api",
+    "seed:gamification": "npm run seed:gamification -w apps/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -1,7 +1,65 @@
 taskmarket.yuloaf.work {
-  reverse_proxy localhost:3000
+	@blocked {
+		path /.env*
+		path /*/.env*
+		path /.git*
+		path /.svn*
+		path /.hg*
+		path /wp-*
+		path /wordpress*
+		path /phpinfo*
+		path /phpmyadmin*
+		path /server-status*
+		path /debug*
+		path /info.php*
+		path /firebase-key.json*
+		path /swagger*
+		path /api/docs*
+	}
+
+	respond @blocked 404
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy localhost:3000
 }
 
 api.yuloaf.work {
-  reverse_proxy localhost:3001
+	@blocked {
+		path /.env*
+		path /*/.env*
+		path /.git*
+		path /.svn*
+		path /.hg*
+		path /wp-*
+		path /wordpress*
+		path /phpinfo*
+		path /phpmyadmin*
+		path /server-status*
+		path /debug*
+		path /info.php*
+		path /firebase-key.json*
+		path /swagger*
+		path /api/docs*
+	}
+
+	respond @blocked 404
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy localhost:3001
 }

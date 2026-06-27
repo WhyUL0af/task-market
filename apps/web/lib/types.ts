@@ -64,20 +64,6 @@ export type UserBadge = {
   badge: Badge;
 };
 
-export type Title = {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-};
-
-export type UserTitle = {
-  id: string;
-  earnedAt: string;
-  active: boolean;
-  title: Title;
-};
-
 export type ExpTransaction = {
   id: string;
   amount: number;
@@ -112,7 +98,7 @@ export type WeeklyChallenge = {
 export type TaskApplication = {
   id: string;
   message?: string | null;
-  status: "PENDING" | "APPROVED" | "ACCEPTED" | "WAITLIST" | "REJECTED";
+  status: "PENDING" | "ACCEPTED" | "WAITLIST" | "REJECTED";
   applicant: User;
   requirement?: TaskRequirement | null;
   requirementId?: string | null;
@@ -149,8 +135,6 @@ export type Task = {
   xpReward: number;
   status: TaskStatus;
   creator: User;
-  assignee?: User | null;
-  assigneeId?: string | null;
   requirements: TaskRequirement[];
   applications: TaskApplication[];
   submissions: TaskSubmission[];
@@ -170,4 +154,28 @@ export type TaskRequirementSkill = {
   id: string;
   skillTag: ProfileTag;
   skillTagId?: string;
+};
+
+export type AccessLog = {
+  id: string;
+  createdAt: string;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  ip?: string | null;
+  userAgent?: string | null;
+  referer?: string | null;
+  userId?: string | null;
+  userEmail?: string | null;
+  userRole?: string | null;
+};
+
+export type AccessLogResponse = {
+  summary: {
+    total: number;
+    uniqueIps: number;
+    authenticatedUsers: number;
+  };
+  rows: AccessLog[];
 };

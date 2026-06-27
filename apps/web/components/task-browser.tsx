@@ -139,7 +139,7 @@ export function TaskBrowser({ tasks, emptyText }: TaskBrowserProps) {
         </label>
       </div>
 
-      <div className="task-tabs" role="tablist" aria-label="任務狀態">
+      <div className="task-tabs" role="tablist" aria-label="任務分類">
         {categoryTabs.map((tab) => {
           const count =
             tab.key === "ALL"
@@ -258,14 +258,14 @@ function TaskCard({ task }: { task: Task }) {
           <svg className="footer-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          {task.applications.length} 人申請
+          {task.applications.length} 申請
         </span>
         {requirementCount > 0 ? (
           <span className="task-card-footer-item">
             <svg className="footer-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {acceptedCount}/{requirementCount} 錄取
+            {acceptedCount}/{requirementCount} 已錄取
           </span>
         ) : null}
         <span className="task-card-footer-item">
@@ -276,30 +276,6 @@ function TaskCard({ task }: { task: Task }) {
         </span>
       </div>
     </Link>
-  );
-}
-
-function TaskChips({
-  task
-}: {
-  task: Pick<Task, "status" | "difficulty" | "reward" | "xpReward" | "dueAt">;
-}) {
-  return (
-    <>
-      <span className={`task-card-status-badge ${statusClassMap[task.status] ?? "task-card-status-draft"}`}>
-        <span className="status-dot"></span>
-        {statusLabels[task.status] ?? task.status}
-      </span>
-      <span className={`task-card-diff-badge ${difficultyClassMap[task.difficulty] ?? "task-card-diff-medium"}`}>
-        {difficultyLabels[task.difficulty] ?? task.difficulty}
-      </span>
-      {task.reward ? (
-        <span className="task-card-reward-chip task-card-reward-budget">
-          NT${task.reward.toLocaleString()}
-        </span>
-      ) : null}
-      <span className="task-card-reward-chip task-card-reward-xp">{task.xpReward} EXP</span>
-    </>
   );
 }
 

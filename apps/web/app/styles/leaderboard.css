@@ -1,4 +1,4 @@
-/* Leaderboard Page Styling */
+
 
 .leaderboard-summary {
   display: flex;
@@ -31,7 +31,7 @@
   font-weight: 700;
 }
 
-/* Leaderboard Tabs */
+
 .board-tabs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -107,7 +107,7 @@
   margin: 0;
 }
 
-/* Podium Cards (Light) */
+
 .podium-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -220,7 +220,7 @@
   border-radius: 4px;
 }
 
-/* Leaderboard List Table */
+
 .ranking-table {
   display: grid;
   gap: 8px;

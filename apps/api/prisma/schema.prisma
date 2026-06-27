@@ -244,3 +244,22 @@ model Comment {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
 }
+
+model AccessLog {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  method       String
+  path         String
+  statusCode   Int
+  durationMs   Int
+  ip           String?
+  userAgent    String?
+  referer      String?
+  userId       String?
+  userEmail    String?
+  userRole     String?
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([ip])
+}

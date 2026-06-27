@@ -348,7 +348,6 @@ export class TasksService {
           select: { id: true }
         },
         submissions: {
-          where: { employeeId: user.id },
           orderBy: { createdAt: "desc" }
         }
       }
@@ -362,8 +361,8 @@ export class TasksService {
     if (task.status !== TaskStatus.IN_PROGRESS && task.status !== TaskStatus.REVIEW) {
       throw new BadRequestException("Task is not in progress");
     }
-    if (task.submissions.some((item) => item.status === SubmissionStatus.PENDING)) {
-      throw new BadRequestException("You already have a submission waiting for review");
+    if (task.submissions[0]?.status === SubmissionStatus.PENDING) {
+      throw new BadRequestException("The latest submission is waiting for review");
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -436,35 +435,18 @@ export class TasksService {
   }
 
   private async syncTaskReviewStatus(taskId: string) {
-    const acceptedApplications = await this.prisma.taskApplication.findMany({
-      where: { taskId, status: ApplicationStatus.ACCEPTED },
-      select: { applicantId: true }
-    });
-    const acceptedUserIds = [...new Set(acceptedApplications.map((item) => item.applicantId))];
-    if (acceptedUserIds.length === 0) {
-      return;
-    }
-
-    const submissions = await this.prisma.taskSubmission.findMany({
-      where: { taskId, employeeId: { in: acceptedUserIds } },
-      select: { employeeId: true, status: true, createdAt: true },
+    const latestSubmission = await this.prisma.taskSubmission.findFirst({
+      where: { taskId },
+      select: { status: true },
       orderBy: { createdAt: "desc" }
     });
-    const latestByUser = this.latestSubmissionStatusByUser(submissions);
-    const hasPendingSubmission = acceptedUserIds.some(
-      (userId) => latestByUser.get(userId) === SubmissionStatus.PENDING
-    );
-    const allAcceptedUsersReviewed = acceptedUserIds.every((userId) =>
-      latestByUser.get(userId) === SubmissionStatus.ACCEPTED
-    );
 
     await this.prisma.task.update({
       where: { id: taskId },
       data: {
-        status:
-          hasPendingSubmission || allAcceptedUsersReviewed
-            ? TaskStatus.REVIEW
-            : TaskStatus.IN_PROGRESS
+        status: latestSubmission?.status === SubmissionStatus.REJECTED
+          ? TaskStatus.IN_PROGRESS
+          : TaskStatus.REVIEW
       }
     });
   }
@@ -478,7 +460,7 @@ export class TasksService {
           select: { applicantId: true }
         },
         submissions: {
-          select: { employeeId: true, status: true, createdAt: true },
+          select: { status: true, createdAt: true },
           orderBy: { createdAt: "desc" }
         }
       }
@@ -495,27 +477,9 @@ export class TasksService {
       throw new BadRequestException("No accepted members to close this task");
     }
 
-    const latestByUser = this.latestSubmissionStatusByUser(task.submissions);
-    const missingAcceptedSubmissions = acceptedUserIds.filter(
-      (userId) => latestByUser.get(userId) !== SubmissionStatus.ACCEPTED
-    );
-    if (missingAcceptedSubmissions.length > 0) {
-      throw new BadRequestException(
-        "All accepted members must have accepted submissions before closing the task"
-      );
+    if (task.submissions[0]?.status !== SubmissionStatus.ACCEPTED) {
+      throw new BadRequestException("The latest submission must be accepted before closing the task");
     }
-  }
-
-  private latestSubmissionStatusByUser(
-    submissions: Array<{ employeeId: string; status: SubmissionStatus; createdAt: Date }>
-  ) {
-    const latestByUser = new Map<string, SubmissionStatus>();
-    for (const submission of submissions) {
-      if (!latestByUser.has(submission.employeeId)) {
-        latestByUser.set(submission.employeeId, submission.status);
-      }
-    }
-    return latestByUser;
   }
 
   private requirementCreateData(requirement: {

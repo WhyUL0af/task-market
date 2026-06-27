@@ -1,4 +1,4 @@
-/* Login Wrap & Panel */
+
 .login-wrap {
   width: min(440px, 100%);
   margin: 0 auto;
@@ -8,7 +8,7 @@
   padding: 40px;
 }
 
-/* Toggle Grid */
+
 .toggle-grid {
   display: grid;
   gap: 12px;
@@ -37,7 +37,7 @@
   cursor: pointer;
 }
 
-/* Stat Grid */
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -67,7 +67,7 @@
   color: var(--foreground);
 }
 
-/* Profile Tag Management & Records */
+
 .list {
   display: grid;
   gap: 12px;
@@ -88,4 +88,141 @@
 
 .record .row strong {
   color: var(--foreground);
+}
+
+
+.achievement-card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.03);
+}
+
+.achievement-card.earned {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), var(--panel));
+}
+
+.achievement-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid rgba(2, 132, 199, 0.16);
+  border-radius: 14px;
+  background: rgba(2, 132, 199, 0.08);
+  color: var(--primary);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.achievement-card.earned .achievement-icon {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.achievement-content {
+  display: grid;
+  gap: 8px;
+}
+
+.achievement-title-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.achievement-title-row h3 {
+  margin: 0;
+}
+
+.achievement-content p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.achievement-state {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.achievement-state.earned {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+
+.access-log-table {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.access-log-row {
+  display: grid;
+  grid-template-columns: 120px minmax(160px, 1fr) 130px 88px minmax(220px, 1.4fr) 86px 86px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.access-log-row:last-child {
+  border-bottom: 0;
+}
+
+.access-log-head {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.access-log-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge.success {
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #047857;
+}
+
+.badge.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #b45309;
+}
+
+.badge.danger {
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #b91c1c;
+}
+
+@media (max-width: 980px) {
+  .access-log-table {
+    overflow-x: auto;
+  }
+
+  .access-log-row {
+    min-width: 900px;
+  }
 }

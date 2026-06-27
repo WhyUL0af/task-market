@@ -22,14 +22,13 @@ export default function MyTasksPage() {
     if (!user) {
       return [];
     }
+
     return tasks.filter((task) => {
       if (user.role === "ADMIN") {
         return task.creator.id === user.id;
       }
-      return (
-        task.assignee?.id === user.id ||
-        task.applications.some((application) => application.applicant.id === user.id)
-      );
+
+      return task.applications.some((application) => application.applicant.id === user.id);
     });
   }, [tasks, user]);
 
@@ -43,7 +42,7 @@ export default function MyTasksPage() {
       </div>
 
       {error ? <p className="error">{error}</p> : null}
-      <TaskBrowser tasks={myTasks} emptyText="目前沒有任務。" />
+      <TaskBrowser tasks={myTasks} emptyText="目前沒有相關任務。" />
     </section>
   );
 }

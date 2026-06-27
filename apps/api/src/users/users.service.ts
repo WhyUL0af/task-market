@@ -8,10 +8,8 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CurrentUser } from "../auth/current-user.decorator";
 import {
-  CreateProfileTagDto,
   CreateUserDto,
   UpdateProfileDto,
-  UpdateProfileTagDto,
   UpdateUserDto
 } from "./dto";
 
@@ -45,10 +43,6 @@ function serializeUser(user: SelectedUser) {
     ...rest,
     skillTags: tags.filter((tag) => tag.type === "SKILL")
   };
-}
-
-function normalizeTagName(name: string) {
-  return name.trim();
 }
 
 @Injectable()
@@ -226,56 +220,6 @@ export class UsersService {
     });
   }
 
-  async createProfileTag(dto: CreateProfileTagDto) {
-    const name = normalizeTagName(dto.name);
-    if (!name) {
-      throw new BadRequestException("Tag name is required");
-    }
-
-    return this.prisma.profileTag.create({
-      data: {
-        name,
-        type: "SKILL"
-      }
-    });
-  }
-
-  async updateProfileTag(id: string, dto: UpdateProfileTagDto) {
-    await this.ensureProfileTag(id);
-    const name = dto.name ? normalizeTagName(dto.name) : undefined;
-    if (dto.name !== undefined && !name) {
-      throw new BadRequestException("Tag name is required");
-    }
-
-    return this.prisma.profileTag.update({
-      where: { id },
-      data: {
-        name,
-        type: "SKILL"
-      }
-    });
-  }
-
-  async deleteProfileTag(id: string) {
-    const tag = await this.prisma.profileTag.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { users: true }
-        }
-      }
-    });
-    if (!tag) {
-      throw new NotFoundException("Profile tag not found");
-    }
-    if (tag._count.users > 0) {
-      throw new BadRequestException("Cannot delete a tag that is in use");
-    }
-
-    await this.prisma.profileTag.delete({ where: { id } });
-    return { ok: true };
-  }
-
   leaderboard() {
     return this.prisma.user.findMany({
       where: { role: "EMPLOYEE" },
@@ -337,14 +281,6 @@ export class UsersService {
 
     await this.prisma.user.delete({ where: { id } });
     return { ok: true };
-  }
-
-  private async ensureProfileTag(id: string) {
-    const tag = await this.prisma.profileTag.findUnique({ where: { id } });
-    if (!tag) {
-      throw new NotFoundException("Profile tag not found");
-    }
-    return tag;
   }
 
   private async replaceUserSkillTags(

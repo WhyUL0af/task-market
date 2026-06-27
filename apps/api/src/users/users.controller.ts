@@ -16,10 +16,8 @@ import {
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import {
-  CreateProfileTagDto,
   CreateUserDto,
   UpdateProfileDto,
-  UpdateProfileTagDto,
   UpdateUserDto
 } from "./dto";
 import { UsersService } from "./users.service";
@@ -57,21 +55,6 @@ export class UsersController {
   @Roles("ADMIN", "EMPLOYEE")
   profileTags() {
     return this.users.profileTags();
-  }
-
-  @Post("profile-tags")
-  createProfileTag(@Body() dto: CreateProfileTagDto) {
-    return this.users.createProfileTag(dto);
-  }
-
-  @Patch("profile-tags/:id")
-  updateProfileTag(@Param("id") id: string, @Body() dto: UpdateProfileTagDto) {
-    return this.users.updateProfileTag(id, dto);
-  }
-
-  @Delete("profile-tags/:id")
-  deleteProfileTag(@Param("id") id: string) {
-    return this.users.deleteProfileTag(id);
   }
 
   @Post()
